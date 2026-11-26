@@ -3,11 +3,6 @@ import { INITIAL_MOCK_LORRIES } from './mockLorryData';
 
 type Listener = () => void;
 
-/**
- * LorryService manages local demo state with subscription capabilities
- * so that any Add, Edit, or Delete operation updates all cards, tables,
- * and navigation counts immediately across the application.
- */
 class LorryServiceClass {
   private lorries: Lorry[] = [...INITIAL_MOCK_LORRIES];
   private listeners: Set<Listener> = new Set();
@@ -29,13 +24,6 @@ class LorryServiceClass {
     return this.lorries.find((l) => l.id === id);
   }
 
-  getLorryByRegistration(regNumber: string): Lorry | undefined {
-    const clean = regNumber.trim().toUpperCase().replace(/\s+/g, '');
-    return this.lorries.find(
-      (l) => l.registrationNumber.trim().toUpperCase().replace(/\s+/g, '') === clean
-    );
-  }
-
   isRegistrationUnique(regNumber: string, excludeLorryId?: string): boolean {
     const clean = regNumber.trim().toUpperCase().replace(/\s+/g, '');
     const existing = this.lorries.find(
@@ -45,26 +33,27 @@ class LorryServiceClass {
     return existing.id === excludeLorryId;
   }
 
+  // Exact 5 metrics: Total Lorries, Active, On Trip, Maintenance, Available
   getSummaryMetrics(): LorrySummaryMetrics {
     const totalLorries = this.lorries.length;
     let activeLorries = 0;
-    let availableLorries = 0;
     let onTripLorries = 0;
     let maintenanceLorries = 0;
+    let availableLorries = 0;
 
     for (const l of this.lorries) {
       if (l.status === 'Active') activeLorries++;
-      else if (l.status === 'Available') availableLorries++;
       else if (l.status === 'On Trip') onTripLorries++;
       else if (l.status === 'Maintenance') maintenanceLorries++;
+      else if (l.status === 'Available') availableLorries++;
     }
 
     return {
       totalLorries,
       activeLorries,
-      availableLorries,
       onTripLorries,
       maintenanceLorries,
+      availableLorries,
     };
   }
 
@@ -76,7 +65,7 @@ class LorryServiceClass {
 
     const newLorry: Lorry = {
       ...lorryData,
-      id: `LR-2026-${String(this.lorries.length + 1).padStart(3, '0')}`,
+      id: `LR-${String(this.lorries.length + 1).padStart(3, '0')}`,
       registrationNumber: cleanReg,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

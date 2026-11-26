@@ -5,7 +5,6 @@ import { DieselDashboardPage } from '../pages/diesel/DieselDashboard';
 import { LorryManagementPage } from '../pages/fleet/LorryManagementPage';
 import { ModulePlaceholder } from '../pages/common/ModulePlaceholder';
 
-// Calculate basename automatically based on Vite base URL (e.g. /FleetOS/ or /)
 const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined;
 
 export const router = createBrowserRouter(
@@ -27,23 +26,23 @@ export const router = createBrowserRouter(
           element: <LorryManagementPage />,
         },
         {
-          path: 'diesel',
-          element: <DieselDashboardPage />,
-        },
-        {
           path: 'trips',
           element: (
             <ModulePlaceholder
-              moduleName="Trips & Deliveries"
+              moduleName="Trips"
               moduleDescription="Manage dispatch orders, routes, e-Way bills, POD collection, and transit checkpoints."
             />
           ),
         },
         {
+          path: 'diesel',
+          element: <DieselDashboardPage />,
+        },
+        {
           path: 'maintenance',
           element: (
             <ModulePlaceholder
-              moduleName="Vehicle Maintenance & Service"
+              moduleName="Maintenance"
               moduleDescription="Schedule periodic engine services, tyre rotations, fitness certificates, and workshop repairs."
             />
           ),
@@ -52,7 +51,7 @@ export const router = createBrowserRouter(
           path: 'expenses',
           element: (
             <ModulePlaceholder
-              moduleName="Expenses & FASTag Tolls"
+              moduleName="Expenses"
               moduleDescription="Reconcile FASTag tolls, driver DA/bata allowances, border entry taxes, and transit expenses."
             />
           ),
@@ -61,8 +60,17 @@ export const router = createBrowserRouter(
           path: 'reports',
           element: (
             <ModulePlaceholder
-              moduleName="Profitability & Fleet Reports"
+              moduleName="Reports"
               moduleDescription="End-to-end trip P&L, per-kilometer profit analysis, and fleet operating performance metrics."
+            />
+          ),
+        },
+        {
+          path: 'settings',
+          element: (
+            <ModulePlaceholder
+              moduleName="Settings"
+              moduleDescription="Configure company profile, tenant preferences, role-based access, and system integrations."
             />
           ),
         },

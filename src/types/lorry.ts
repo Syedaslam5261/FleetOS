@@ -8,53 +8,46 @@ export type VehicleType =
   | 'Other';
 
 export type LorryStatus = 
-  | 'Available'
   | 'Active'
   | 'On Trip'
   | 'Maintenance'
+  | 'Available'
   | 'Inactive';
 
 export interface LorryDocument {
   name: string;
-  size: number; // in bytes
+  size: number;
   uploadedAt: string;
   type: string;
 }
 
 export interface Lorry {
   id: string;
-  // Section A - Vehicle Information
+  // Vehicle Information
   registrationNumber: string; // unique, e.g. "MH 12 RN 4821"
   vehicleType: VehicleType;
   manufacturer: string; // e.g. "Tata Motors", "Ashok Leyland"
-  model: string; // e.g. "Signa 4825.TK"
+  model: string; // e.g. "Signa 4825.TK (2023)"
   manufacturingYear: number;
   vehicleColour: string;
   loadCapacityTonnes: number;
   numberOfTyres: number;
-  bodyType: string; // e.g. "Container", "Open Body", "Tipper"
+  bodyType: string;
 
-  // Section B - Owner Information
-  ownerName: string;
-  ownerMobile: string;
-  companyName?: string;
-  ownerEmail?: string;
-  ownerAddress?: string;
-
-  // Section C - Driver Information (optional)
+  // Driver Information (optional)
   driverName?: string;
   driverMobile?: string;
   driverLicenceNumber?: string;
   licenceExpiryDate?: string;
 
-  // Section D - Documents
+  // Documents
   rcDocument?: LorryDocument;
   insuranceDocument?: LorryDocument;
   fitnessDocument?: LorryDocument;
   pucDocument?: LorryDocument;
   permitDocument?: LorryDocument;
 
-  // Section E - Operational Information
+  // Operational Information
   odometerReadingKm: number;
   status: LorryStatus;
   registrationExpiryDate?: string;
@@ -68,13 +61,14 @@ export interface Lorry {
 export interface LorrySummaryMetrics {
   totalLorries: number;
   activeLorries: number;
-  availableLorries: number;
   onTripLorries: number;
   maintenanceLorries: number;
+  availableLorries: number;
 }
 
 export interface LorryFilterParams {
   searchQuery: string;
   vehicleType: 'ALL' | VehicleType;
   status: 'ALL' | LorryStatus;
+  dateFilter?: string;
 }

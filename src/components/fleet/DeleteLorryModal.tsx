@@ -33,7 +33,7 @@ export const DeleteLorryModal: React.FC<DeleteLorryModalProps> = ({
             <p className="font-bold text-rose-900">High Risk Action</p>
             <p className="mt-0.5 leading-relaxed">
               Are you sure you want to remove <strong className="font-mono text-rose-950 font-bold">{lorry.registrationNumber}</strong> from FleetOS?
-              This will remove the vehicle profile and historical assignments from the active roster.
+              This action cannot be undone.
             </p>
           </div>
         </div>
@@ -44,8 +44,8 @@ export const DeleteLorryModal: React.FC<DeleteLorryModalProps> = ({
             <span className="font-mono font-semibold text-slate-800">{lorry.registrationNumber} ({lorry.model})</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-500">Owner:</span>
-            <span className="font-medium text-slate-800">{lorry.ownerName}</span>
+            <span className="text-slate-500">Driver Assigned:</span>
+            <span className="font-medium text-slate-800">{lorry.driverName || 'Unassigned'}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-500">Current Status:</span>

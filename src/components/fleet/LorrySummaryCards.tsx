@@ -1,6 +1,5 @@
 import React from 'react';
-import { Truck, CheckCircle2, Navigation, Wrench, Clock, ShieldAlert } from 'lucide-react';
-import { StatCard } from '../common/StatCard';
+import { Truck, CheckCircle2, Navigation, Wrench, Clock } from 'lucide-react';
 import { LorrySummaryMetrics } from '../../types/lorry';
 
 interface LorrySummaryCardsProps {
@@ -8,62 +7,64 @@ interface LorrySummaryCardsProps {
 }
 
 export const LorrySummaryCards: React.FC<LorrySummaryCardsProps> = ({ metrics }) => {
+  const cards = [
+    {
+      title: 'Total Lorries',
+      value: metrics.totalLorries,
+      icon: Truck,
+      bg: 'bg-blue-50',
+      textColor: 'text-blue-600',
+    },
+    {
+      title: 'Active',
+      value: metrics.activeLorries,
+      icon: CheckCircle2,
+      bg: 'bg-emerald-50',
+      textColor: 'text-emerald-600',
+    },
+    {
+      title: 'On Trip',
+      value: metrics.onTripLorries,
+      icon: Navigation,
+      bg: 'bg-blue-50',
+      textColor: 'text-blue-600',
+    },
+    {
+      title: 'Maintenance',
+      value: metrics.maintenanceLorries,
+      icon: Wrench,
+      bg: 'bg-amber-50',
+      textColor: 'text-amber-600',
+    },
+    {
+      title: 'Available',
+      value: metrics.availableLorries,
+      icon: Clock,
+      bg: 'bg-teal-50',
+      textColor: 'text-teal-600',
+    },
+  ];
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 sm:gap-4">
-      {/* 1. Total Lorries */}
-      <StatCard
-        title="Total Lorries"
-        value={metrics.totalLorries.toString()}
-        unit="Vehicles"
-        icon={<Truck className="w-5 h-5" />}
-        accentColor="blue"
-        tooltip="Total registered commercial transport lorries in FleetOS"
-        secondaryText="Active Fleet Roster"
-      />
-
-      {/* 2. Active Lorries */}
-      <StatCard
-        title="Active Lorries"
-        value={metrics.activeLorries.toString()}
-        unit="Vehicles"
-        icon={<CheckCircle2 className="w-5 h-5" />}
-        accentColor="emerald"
-        tooltip="Lorries currently in active commercial readiness or assigned to routes"
-        secondaryText="Ready for Dispatch"
-      />
-
-      {/* 3. Available Lorries */}
-      <StatCard
-        title="Available"
-        value={metrics.availableLorries.toString()}
-        unit="Lorries"
-        icon={<Clock className="w-5 h-5" />}
-        accentColor="indigo"
-        tooltip="Unassigned or stationary lorries ready to take new freight consignments"
-        secondaryText="Immediate Booking"
-      />
-
-      {/* 4. On Trip */}
-      <StatCard
-        title="On Trip"
-        value={metrics.onTripLorries.toString()}
-        unit="In-Transit"
-        icon={<Navigation className="w-5 h-5" />}
-        accentColor="blue"
-        tooltip="Vehicles currently hauling cargo on transit highways"
-        secondaryText="Live Route Transit"
-      />
-
-      {/* 5. Under Maintenance */}
-      <StatCard
-        title="Under Maintenance"
-        value={metrics.maintenanceLorries.toString()}
-        unit="In Workshop"
-        icon={<Wrench className="w-5 h-5" />}
-        accentColor="amber"
-        tooltip="Lorries undergoing periodic fitness, overhaul, or workshop service"
-        secondaryText="Scheduled Repairs"
-      />
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      {cards.map((card) => (
+        <div
+          key={card.title}
+          className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow transition-shadow"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-500">{card.title}</span>
+            <div className={`p-2 rounded-lg ${card.bg} ${card.textColor}`}>
+              <card.icon className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <span className="text-2xl font-bold tracking-tight text-slate-900 font-sans">
+              {card.value}
+            </span>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };
