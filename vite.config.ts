@@ -4,6 +4,7 @@ import { fileURLToPath, URL } from 'node:url';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: process.env.VITE_BASE_PATH || (process.env.GITHUB_PAGES ? '/FleetOS/' : './'),
   plugins: [react()],
   resolve: {
     alias: {
