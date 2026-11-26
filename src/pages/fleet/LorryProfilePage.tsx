@@ -19,7 +19,7 @@ import {
 import { clsx } from 'clsx';
 import { Button } from '../../components/common/Button';
 import { LorryService } from '../../services/lorryService';
-import { FUEL_LEDGER, FUEL_REFERENCE_DAY } from '../../services/mockFuelLedger';
+import { FUEL_LEDGER } from '../../services/mockFuelLedger';
 import { filterEntries } from '../../utils/fuelAnalytics';
 import { LorryStatus } from '../../types/lorry';
 import { MapsGpsTab } from '../../components/fleet/profile/MapsGpsTab';
@@ -30,7 +30,7 @@ import { DriverTab } from '../../components/fleet/profile/DriverTab';
 import { FuelOverviewSection } from '../../components/diesel/FuelOverviewSection';
 import { FuelCalculatorSection } from '../../components/diesel/FuelCalculatorSection';
 import { FuelReceiptsSection } from '../../components/diesel/FuelReceiptsSection';
-import { FuelReportsSection } from '../../components/diesel/FuelReportsSection';
+import { TripDieselAnalyticsSection } from '../../components/diesel/TripDieselAnalyticsSection';
 
 const STATUS_STYLES: Record<LorryStatus, string> = {
   Active: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -249,7 +249,7 @@ export const LorryProfilePage: React.FC = () => {
             {/* Level 3: Diesel Sub-Section Detail Views */}
             {activeSection === 'diesel' && activeDieselSub && activeDieselMeta && (
               <div className="space-y-4">
-                {activeDieselSub === 'calculator' ? (
+                {activeDieselSub === 'calculator' || activeDieselSub === 'reports' ? (
                   <div className="border-b border-slate-200 pb-4 space-y-1.5">
                     <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
                       <button
@@ -277,10 +277,12 @@ export const LorryProfilePage: React.FC = () => {
                       </button>
                     </nav>
                     <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-                      Fuel Calculator
+                      {activeDieselSub === 'calculator' ? 'Fuel Calculator' : 'Trip-wise Diesel Cost'}
                     </h1>
                     <p className="text-xs text-slate-500">
-                      Plan your truck's fuel requirements and trip expenses.
+                      {activeDieselSub === 'calculator'
+                        ? "Plan your truck's fuel requirements and trip expenses."
+                        : 'Track diesel expenses based on trips completed by your lorry.'}
                     </p>
                   </div>
                 ) : (
@@ -308,13 +310,7 @@ export const LorryProfilePage: React.FC = () => {
                   <FuelReceiptsSection entries={lorryFuelEntries} regOf={regOf} />
                 )}
                 {activeDieselSub === 'reports' && (
-                  <FuelReportsSection
-                    rangeEntries={lorryFuelEntries}
-                    lorryEntries={lorryFuelEntries}
-                    refDay={FUEL_REFERENCE_DAY}
-                    regOf={regOf}
-                    scopeLabel={lorry.registrationNumber}
-                  />
+                  <TripDieselAnalyticsSection key={lorry.id} lorry={lorry} />
                 )}
               </div>
             )}
