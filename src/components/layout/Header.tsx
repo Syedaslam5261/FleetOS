@@ -7,18 +7,24 @@ import {
   Shield,
   Layers,
   CheckCircle2,
-  Calendar
+  Calendar,
+  PanelLeftClose,
+  PanelLeft
 } from 'lucide-react';
 import { Badge } from '../common/Badge';
 
 interface HeaderProps {
-  onToggleSidebar: () => void;
+  onToggleSidebarMobile: () => void;
+  onToggleSidebarCollapse: () => void;
+  isSidebarCollapsed: boolean;
   pageTitle?: string;
   pageSubtitle?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  onToggleSidebar,
+  onToggleSidebarMobile,
+  onToggleSidebarCollapse,
+  isSidebarCollapsed,
   pageTitle,
   pageSubtitle,
 }) => {
@@ -47,7 +53,7 @@ export const Header: React.FC<HeaderProps> = ({
     }
   }
 
-  // Realistic formatted Indian date
+  // Formatted Indian date
   const todayFormatted = new Intl.DateTimeFormat('en-IN', {
     weekday: 'short',
     day: 'numeric',
@@ -55,21 +61,39 @@ export const Header: React.FC<HeaderProps> = ({
     year: 'numeric'
   }).format(new Date());
 
+  // Handle Menu button click: On desktop toggles collapse; on mobile opens drawer
+  const handleMenuClick = () => {
+    if (window.innerWidth >= 1024) {
+      onToggleSidebarCollapse();
+    } else {
+      onToggleSidebarMobile();
+    }
+  };
+
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 backdrop-blur px-4 lg:px-8">
-      {/* Left: Mobile Toggle & Page Context */}
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 backdrop-blur px-4 lg:px-6 transition-all duration-300">
+      {/* Left: Menu Toggle Button & Page Context */}
       <div className="flex items-center gap-3 lg:gap-4 min-w-0">
+        {/* Menu Toggle Button (Hamburger icon on mobile, Collapsible toggle on desktop) */}
         <button
-          onClick={onToggleSidebar}
-          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 lg:hidden"
-          aria-label="Open sidebar"
+          onClick={handleMenuClick}
+          className="rounded-xl p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80 active:scale-95 transition-all duration-150 flex items-center justify-center shadow-xs"
+          aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={
+            window.innerWidth >= 1024
+              ? isSidebarCollapsed
+                ? 'Expand sidebar (Ctrl+B)'
+                : 'Collapse sidebar (Ctrl+B)'
+              : 'Open navigation menu'
+          }
         >
-          <Menu className="h-5 w-5" />
+          {/* Shows hamburger Menu icon, with animated state */}
+          <Menu className="h-5 w-5 transition-transform duration-200" />
         </button>
 
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h1 className="text-lg lg:text-xl font-bold tracking-tight text-slate-900 truncate">
+            <h1 className="text-base sm:text-lg lg:text-xl font-bold tracking-tight text-slate-900 truncate">
               {resolvedTitle}
             </h1>
             <Badge variant="info" size="sm" className="hidden sm:inline-flex">
@@ -115,7 +139,12 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="absolute right-0 mt-2 w-80 rounded-xl bg-white p-3 shadow-xl border border-slate-200 z-50 animate-in fade-in slide-in-from-top-1">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                 <span className="text-xs font-semibold text-slate-900">Fleet Alerts (2)</span>
-                <span className="text-[10px] text-blue-600 font-medium cursor-pointer" onClick={() => setShowNotifications(false)}>Mark read</span>
+                <span
+                  className="text-[10px] text-blue-600 font-medium cursor-pointer"
+                  onClick={() => setShowNotifications(false)}
+                >
+                  Mark read
+                </span>
               </div>
               <div className="mt-2 space-y-2">
                 <div className="rounded-lg bg-amber-50/80 p-2 text-xs border border-amber-200/50">
