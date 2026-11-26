@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # FleetOS Frontend Service
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fleetos-frontend
+    ports:
+      - "80:80"
+    environment:
+      - VITE_API_URL=http://localhost:8000/api/v1
+    restart: unless-stopped
+    networks:
+      - fleetos-net
+
+  # Future Backend Service (FastAPI)
+  # backend:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   container_name: fleetos-backend
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     - DATABASE_URL=mysql+aiomysql://fleet_user:fleet_secret@mysql:3306/fleetos_db
+  #   depends_on:
+  #     - mysql
+  #   networks:
+  #     - fleetos-net
+
+  # Future Database Service (MySQL 8.x)
+  # mysql:
+  #   image: mysql:8.0
+  #   container_name: fleetos-mysql
+  #   ports:
+  #     - "3306:3306"
+  #   environment:
+  #     - MYSQL_DATABASE=fleetos_db
+  #     - MYSQL_USER=fleet_user
+  #     - MYSQL_PASSWORD=fleet_secret
+  #     - MYSQL_ROOT_PASSWORD=fleet_root_secret
+  #   volumes:
+  #     - mysql_data:/var/lib/mysql
+  #   networks:
+  #     - fleetos-net
+
+networks:
+  fleetos-net:
+    driver: bridge
+
+# volumes:
+#   mysql_data:
