@@ -31,6 +31,14 @@ export const router = createBrowserRouter(
           element: <LorryProfilePage />,
         },
         {
+          path: 'fleet/:lorryId/:section',
+          element: <LorryProfilePage />,
+        },
+        {
+          path: 'fleet/:lorryId/:section/:subSection',
+          element: <LorryProfilePage />,
+        },
+        {
           path: 'trips',
           element: (
             <ModulePlaceholder
