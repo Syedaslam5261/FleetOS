@@ -249,10 +249,46 @@ export const LorryProfilePage: React.FC = () => {
             {/* Level 3: Diesel Sub-Section Detail Views */}
             {activeSection === 'diesel' && activeDieselSub && activeDieselMeta && (
               <div className="space-y-4">
-                <div className="flex items-center gap-2.5 border-b border-slate-200 pb-3">
-                  <activeDieselMeta.icon className="h-5 w-5 text-blue-600" />
-                  <h1 className="text-lg font-bold text-slate-900">{activeDieselMeta.label}</h1>
-                </div>
+                {activeDieselSub === 'calculator' ? (
+                  <div className="border-b border-slate-200 pb-4 space-y-1.5">
+                    <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
+                      <button
+                        type="button"
+                        onClick={() => navigate('/fleet')}
+                        className="hover:text-blue-600 font-medium"
+                      >
+                        Lorry Management
+                      </button>
+                      <span>/</span>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/fleet/${lorry.id}`)}
+                        className="font-mono hover:text-blue-600 font-medium"
+                      >
+                        {lorry.registrationNumber}
+                      </button>
+                      <span>/</span>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/fleet/${lorry.id}/diesel`)}
+                        className="hover:text-blue-600 font-medium"
+                      >
+                        Diesel Management
+                      </button>
+                    </nav>
+                    <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+                      Fuel Calculator
+                    </h1>
+                    <p className="text-xs text-slate-500">
+                      Plan your truck's fuel requirements and trip expenses.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2.5 border-b border-slate-200 pb-3">
+                    <activeDieselMeta.icon className="h-5 w-5 text-blue-600" />
+                    <h1 className="text-lg font-bold text-slate-900">{activeDieselMeta.label}</h1>
+                  </div>
+                )}
 
                 {activeDieselSub === 'overview' && (
                   <FuelOverviewSection
@@ -264,8 +300,8 @@ export const LorryProfilePage: React.FC = () => {
                 {activeDieselSub === 'calculator' && (
                   <FuelCalculatorSection
                     key={lorry.id}
-                    ledger={lorryFuelEntries}
-                    lockedLorry={{ id: lorry.id, label: lorry.registrationNumber }}
+                    lorry={lorry}
+                    lorryFuelEntries={lorryFuelEntries}
                   />
                 )}
                 {activeDieselSub === 'receipts' && (

@@ -1,0 +1,133 @@
+import { RouteLocation, RoutedPathResult } from '../types/fuel';
+
+interface NominatimResult {
+  display_name: string;
+  lat: string;
+  lon: string;
+  name?: string;
+  address?: {
+    city?: string;
+    town?: string;
+    village?: string;
+    suburb?: string;
+    state?: string;
+  };
+}
+
+interface OsrmRouteResponse {
+  code: string;
+  message?: string;
+  routes?: Array<{
+    distance: number; // meters
+    duration: number; // seconds
+    geometry: {
+      type: 'LineString';
+      coordinates: Array<[number, number]>; // [lng, lat]
+    };
+    legs: Array<{
+      distance: number;
+      duration: number;
+    }>;
+  }>;
+}
+
+const shortLabelFromNominatim = (item: NominatimResult): string => {
+  const primary =
+    item.name ||
+    item.address?.city ||
+    item.address?.town ||
+    item.address?.village ||
+    item.address?.suburb ||
+    item.display_name.split(',')[0];
+  const state = item.address?.state;
+  return state && !primary.includes(state) ? `${primary}, ${state}` : primary;
+};
+
+/**
+ * Search cities, towns, areas, and addresses via OpenStreetMap Nominatim.
+ * Prioritizes India results for FleetOS, falling back to global search if none match.
+ */
+export async function searchLocations(query: string, signal?: AbortSignal): Promise<RouteLocation[]> {
+  const trimmed = query.trim();
+  if (trimmed.length < 2) return [];
+
+  const fetchNominatim = async (countryCodes?: string): Promise<NominatimResult[]> => {
+    const params = new URLSearchParams({
+      q: trimmed,
+      format: 'json',
+      addressdetails: '1',
+      limit: '5',
+    });
+    if (countryCodes) params.set('countrycodes', countryCodes);
+
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
+      signal,
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) throw new Error(`Location search failed (HTTP ${res.status})`);
+    return (await res.json()) as NominatimResult[];
+  };
+
+  let results = await fetchNominatim('in');
+  if (results.length === 0) {
+    results = await fetchNominatim();
+  }
+
+  return results.map((r) => ({
+    label: r.display_name,
+    shortName: shortLabelFromNominatim(r),
+    lat: parseFloat(r.lat),
+    lng: parseFloat(r.lon),
+  }));
+}
+
+/**
+ * Calculate actual road distance and geometry across ordered waypoints using OSRM.
+ * Never fabricates distances; throws a descriptive error if routing fails or no road route exists.
+ */
+export async function fetchRoadRoute(
+  waypoints: RouteLocation[],
+  signal?: AbortSignal
+): Promise<RoutedPathResult> {
+  if (waypoints.length < 2) {
+    throw new Error('At least a starting location and final destination are required.');
+  }
+
+  const coordString = waypoints.map((w) => `${w.lng},${w.lat}`).join(';');
+  const url = `https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson`;
+
+  const res = await fetch(url, { signal });
+  if (!res.ok) {
+    throw new Error(`OSRM routing service returned HTTP ${res.status}.`);
+  }
+
+  const data = (await res.json()) as OsrmRouteResponse;
+  if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
+    throw new Error(data.message || 'No drivable road route was found between the selected locations.');
+  }
+
+  const route = data.routes[0];
+  const coordinates: Array<[number, number]> = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+  const legs = route.legs.map((leg, i) => ({
+    from: waypoints[i]?.shortName ?? `Stop ${i + 1}`,
+    to: waypoints[i + 1]?.shortName ?? `Stop ${i + 2}`,
+    distanceKm: Math.round((leg.distance / 1000) * 10) / 10,
+    durationSeconds: leg.duration,
+  }));
+
+  return {
+    distanceKm: Math.round((route.distance / 1000) * 10) / 10,
+    durationSeconds: route.duration,
+    coordinates,
+    legs,
+  };
+}
+
+export function formatDuration(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds <= 0) return '—';
+  const totalMinutes = Math.round(seconds / 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+  if (hours === 0) return `${mins} min`;
+  return mins === 0 ? `${hours} hr` : `${hours} hr ${mins} min`;
+}

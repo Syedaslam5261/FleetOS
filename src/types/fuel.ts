@@ -49,3 +49,49 @@ export interface PeriodPoint extends FuelSummary {
   label: string;
   mileage: number | null;
 }
+
+export interface RouteLocation {
+  label: string;
+  shortName: string;
+  lat: number;
+  lng: number;
+}
+
+export interface RouteLegSummary {
+  from: string;
+  to: string;
+  distanceKm: number;
+  durationSeconds: number;
+}
+
+export interface RoutedPathResult {
+  distanceKm: number;
+  durationSeconds: number;
+  coordinates: Array<[number, number]>; // [lat, lng]
+  legs: RouteLegSummary[];
+}
+
+export interface TripFuelCalculation {
+  oneWayDistanceKm: number;
+  totalDistanceKm: number;
+  includeReturnJourney: boolean;
+  mileageKmPerL: number;
+  dieselPricePerL: number;
+  baseDieselLitres: number;
+  bufferLitres: number;
+  totalDieselLitres: number;
+  baseDieselCost: number;
+  bufferDieselCost: number;
+  totalFuelCost: number;
+}
+
+export interface SavedFuelEstimate extends TripFuelCalculation {
+  id: string;
+  lorryId: string;
+  lorryRegistration: string;
+  routeLabels: string[]; // [origin, ...stops, destination]
+  distanceSource: 'OSRM_ROAD' | 'MANUAL_DEMO';
+  durationSeconds?: number;
+  createdAt: string;
+}
+

@@ -1,4 +1,4 @@
-import { FuelLedgerEntry, FuelSummary, PeriodPoint } from '../types/fuel';
+import { FuelLedgerEntry, FuelSummary, PeriodPoint, TripFuelCalculation } from '../types/fuel';
 
 const MS_DAY = 86_400_000;
 export const dayOf = (iso: string) => iso.slice(0, 10);
@@ -108,3 +108,55 @@ export function calcFuelEstimate(distanceKm: number, mileageKmPerL: number, pric
   const cost = litres * pricePerL;
   return { litres, cost, costPerKm: cost / distanceKm };
 }
+
+/**
+ * FleetOS Fuel Calculator exact formulas:
+ * - Total Distance = Return Journey ? One-Way Distance x 2 : One-Way Distance
+ * - Base Diesel = Total Distance / Truck Mileage
+ * - Total Diesel = Base Diesel + Additional Buffer Litres
+ * - Base Cost = Base Diesel x Diesel Price
+ * - Buffer Cost = Buffer Litres x Diesel Price
+ * - Total Fuel Cost = Total Diesel x Diesel Price
+ */
+export function calculateTripFuel(
+  oneWayDistanceKm: number,
+  includeReturnJourney: boolean,
+  mileageKmPerL: number,
+  dieselPricePerL: number,
+  bufferLitres: number
+): TripFuelCalculation | null {
+  if (
+    !Number.isFinite(oneWayDistanceKm) ||
+    oneWayDistanceKm <= 0 ||
+    !Number.isFinite(mileageKmPerL) ||
+    mileageKmPerL <= 0 ||
+    !Number.isFinite(dieselPricePerL) ||
+    dieselPricePerL <= 0 ||
+    !Number.isFinite(bufferLitres) ||
+    bufferLitres < 0
+  ) {
+    return null;
+  }
+
+  const totalDistanceKm = includeReturnJourney ? oneWayDistanceKm * 2 : oneWayDistanceKm;
+  const baseDieselLitres = totalDistanceKm / mileageKmPerL;
+  const totalDieselLitres = baseDieselLitres + bufferLitres;
+  const baseDieselCost = baseDieselLitres * dieselPricePerL;
+  const bufferDieselCost = bufferLitres * dieselPricePerL;
+  const totalFuelCost = totalDieselLitres * dieselPricePerL;
+
+  return {
+    oneWayDistanceKm,
+    totalDistanceKm,
+    includeReturnJourney,
+    mileageKmPerL,
+    dieselPricePerL,
+    baseDieselLitres,
+    bufferLitres,
+    totalDieselLitres,
+    baseDieselCost,
+    bufferDieselCost,
+    totalFuelCost,
+  };
+}
+
