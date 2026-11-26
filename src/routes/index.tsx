@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
 import { DieselDashboardPage } from '../pages/diesel/DieselDashboard';
 import { LorryManagementPage } from '../pages/fleet/LorryManagementPage';
+import { LorryProfilePage } from '../pages/fleet/LorryProfilePage';
 import { ModulePlaceholder } from '../pages/common/ModulePlaceholder';
 
 const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined;
@@ -24,6 +25,10 @@ export const router = createBrowserRouter(
         {
           path: 'fleet',
           element: <LorryManagementPage />,
+        },
+        {
+          path: 'fleet/:lorryId',
+          element: <LorryProfilePage />,
         },
         {
           path: 'trips',

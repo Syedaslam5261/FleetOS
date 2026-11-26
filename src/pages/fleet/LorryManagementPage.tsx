@@ -4,7 +4,7 @@ import { LorrySummaryCards } from '../../components/fleet/LorrySummaryCards';
 import { LorryFilterBar } from '../../components/fleet/LorryFilterBar';
 import { LorryTable } from '../../components/fleet/LorryTable';
 import { AddLorryModal } from '../../components/fleet/AddLorryModal';
-import { LorryDetailModal } from '../../components/fleet/LorryDetailModal';
+import { useNavigate } from 'react-router-dom';
 import { DeleteLorryModal } from '../../components/fleet/DeleteLorryModal';
 import { Lorry, LorryFilterParams } from '../../types/lorry';
 import { LorryService } from '../../services/lorryService';
@@ -25,7 +25,7 @@ export const LorryManagementPage: React.FC = () => {
   // Modal Controls
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [lorryToEdit, setLorryToEdit] = useState<Lorry | null>(null);
-  const [lorryToView, setLorryToView] = useState<Lorry | null>(null);
+  const navigate = useNavigate();
   const [lorryToDelete, setLorryToDelete] = useState<Lorry | null>(null);
 
   // Toast Notification
@@ -165,7 +165,7 @@ export const LorryManagementPage: React.FC = () => {
       {/* Lorry Table: Exactly 7 columns matching reference */}
       <LorryTable
         lorries={filteredLorries}
-        onViewDetails={(lorry) => setLorryToView(lorry)}
+        onViewDetails={(lorry) => navigate(`/fleet/${lorry.id}`)}
         onEdit={(lorry) => handleOpenEditModal(lorry)}
         onDelete={(lorry) => setLorryToDelete(lorry)}
         onAddNew={handleOpenAddModal}
@@ -180,14 +180,6 @@ export const LorryManagementPage: React.FC = () => {
         }}
         onSave={handleLorrySaved}
         lorryToEdit={lorryToEdit}
-      />
-
-      {/* Lorry Details Profile Modal */}
-      <LorryDetailModal
-        isOpen={!!lorryToView}
-        lorry={lorryToView}
-        onClose={() => setLorryToView(null)}
-        onEdit={(lorry) => handleOpenEditModal(lorry)}
       />
 
       {/* Delete Confirmation Modal */}

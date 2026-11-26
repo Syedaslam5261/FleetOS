@@ -6,6 +6,10 @@ type Listener = () => void;
 class LorryServiceClass {
   private lorries: Lorry[] = [...INITIAL_MOCK_LORRIES];
   private listeners: Set<Listener> = new Set();
+  // Monotonic ID counter: IDs are never reused, even after deletes, so a new lorry
+  // can never inherit another (deleted) lorry's records.
+  private nextSeq: number =
+    Math.max(0, ...INITIAL_MOCK_LORRIES.map((l) => Number(l.id.replace(/\D/g, '')))) + 1;
 
   subscribe(listener: Listener): () => void {
     this.listeners.add(listener);
@@ -65,7 +69,7 @@ class LorryServiceClass {
 
     const newLorry: Lorry = {
       ...lorryData,
-      id: `LR-${String(this.lorries.length + 1).padStart(3, '0')}`,
+      id: `LR-${String(this.nextSeq++).padStart(3, '0')}`,
       registrationNumber: cleanReg,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
