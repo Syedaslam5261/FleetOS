@@ -27,18 +27,6 @@ export const router = createBrowserRouter(
           element: <LorryManagementPage />,
         },
         {
-          path: 'fleet/:lorryId',
-          element: <LorryProfilePage />,
-        },
-        {
-          path: 'fleet/:lorryId/:section',
-          element: <LorryProfilePage />,
-        },
-        {
-          path: 'fleet/:lorryId/:section/:subSection',
-          element: <LorryProfilePage />,
-        },
-        {
           path: 'trips',
           element: (
             <ModulePlaceholder
@@ -92,6 +80,18 @@ export const router = createBrowserRouter(
           element: <Navigate to="/fleet" replace />,
         },
       ],
+    },
+    {
+      path: '/fleet/:lorryId',
+      element: <LorryProfilePage />,
+    },
+    {
+      path: '/fleet/:lorryId/:section',
+      element: <LorryProfilePage />,
+    },
+    {
+      path: '/fleet/:lorryId/:section/:subSection',
+      element: <LorryProfilePage />,
     },
   ],
   {
