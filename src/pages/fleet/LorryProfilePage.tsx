@@ -67,15 +67,17 @@ const MenuCard: React.FC<{
   <button
     type="button"
     onClick={onClick}
-    className="group flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white p-5 text-left shadow-sm transition-all duration-150 hover:border-blue-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+    className="group flex w-full min-h-[108px] sm:min-h-[76px] flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:p-5 text-left shadow-sm transition-colors hover:border-blue-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500/40"
   >
-    <div className="flex items-center gap-4 min-w-0">
+    <div className="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-3 sm:gap-4 min-w-0">
       <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#0b1329] text-white transition-colors group-hover:bg-blue-600">
         <Icon className="h-5 w-5" />
       </div>
-      <span className="truncate text-sm font-semibold text-slate-900 sm:text-base">{label}</span>
+      <ChevronRight className="h-4 w-4 sm:hidden flex-shrink-0 text-slate-400 group-hover:text-blue-600" />
+      <span className="hidden sm:inline truncate text-base font-semibold text-slate-900">{label}</span>
     </div>
-    <ChevronRight className="h-5 w-5 flex-shrink-0 text-slate-400 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-blue-600" />
+    <span className="sm:hidden text-xs font-semibold leading-snug text-slate-900">{label}</span>
+    <ChevronRight className="hidden sm:block h-5 w-5 flex-shrink-0 text-slate-400 group-hover:text-blue-600" />
   </button>
 );
 
@@ -160,9 +162,9 @@ export const LorryProfilePage: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate(backConfig.to)}
-            className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+            className="inline-flex min-h-[44px] flex-shrink-0 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
           >
-            <ArrowLeft className="h-3.5 w-3.5" />
+            <ArrowLeft className="h-4 w-4" />
             <span className="hidden sm:inline">{backConfig.label}</span>
             <span className="sm:hidden">Back</span>
           </button>
@@ -213,7 +215,7 @@ export const LorryProfilePage: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   {PROFILE_SECTIONS.map(({ key, label, icon }) => (
                     <MenuCard
                       key={key}
@@ -233,7 +235,7 @@ export const LorryProfilePage: React.FC = () => {
                   <Droplets className="h-5 w-5 text-blue-600" />
                   <h1 className="text-lg font-bold text-slate-900">Diesel Management</h1>
                 </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   {DIESEL_SUBSECTIONS.map(({ key, label, icon }) => (
                     <MenuCard
                       key={key}

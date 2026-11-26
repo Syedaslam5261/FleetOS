@@ -486,7 +486,7 @@ export const FuelCalculatorSection: React.FC<FuelCalculatorSectionProps> = ({
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
               {BUFFER_PRESETS.map((litres) => {
                 const isSelected = customBufferInput.trim() === '' && bufferLitres === litres;
                 return (
@@ -495,7 +495,7 @@ export const FuelCalculatorSection: React.FC<FuelCalculatorSectionProps> = ({
                     type="button"
                     onClick={() => handleSelectBufferPreset(litres)}
                     className={clsx(
-                      'rounded-lg border px-3.5 py-2 text-xs font-mono font-semibold transition-colors',
+                      'min-h-[44px] rounded-lg border px-3.5 py-2 text-xs font-mono font-semibold transition-colors',
                       isSelected
                         ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
                         : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
@@ -506,7 +506,7 @@ export const FuelCalculatorSection: React.FC<FuelCalculatorSectionProps> = ({
                 );
               })}
 
-              <div className="flex items-center gap-1.5">
+              <div className="col-span-3 sm:col-span-1 flex items-center gap-1.5">
                 <input
                   type="number"
                   min="0"
@@ -516,7 +516,7 @@ export const FuelCalculatorSection: React.FC<FuelCalculatorSectionProps> = ({
                   value={customBufferInput}
                   onChange={(e) => setCustomBufferInput(e.target.value)}
                   className={clsx(
-                    'w-28 rounded-lg border px-3 py-2 text-xs font-mono font-semibold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500',
+                    'min-h-[44px] w-full sm:w-28 rounded-lg border px-3 py-2 text-sm sm:text-xs font-mono font-semibold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500',
                     customBufferInput.trim() !== '' ? 'border-blue-600 bg-blue-50/40' : 'border-slate-300 bg-white'
                   )}
                 />
@@ -540,7 +540,7 @@ export const FuelCalculatorSection: React.FC<FuelCalculatorSectionProps> = ({
               leftIcon={<Calculator className="h-4 w-4" />}
               onClick={handleCalculate}
               isLoading={isRouting}
-              className="w-full sm:w-auto"
+              className="w-full min-h-[48px]"
             >
               Calculate Fuel
             </Button>

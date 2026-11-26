@@ -129,14 +129,14 @@ export const TripDieselAnalyticsSection: React.FC<TripDieselAnalyticsSectionProp
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           {/* 4 Period Mode Buttons */}
-          <div className="inline-flex flex-wrap rounded-lg border border-slate-200 bg-slate-100 p-1">
+          <div className="grid grid-cols-4 gap-1 sm:inline-flex rounded-lg border border-slate-200 bg-slate-100 p-1">
             {PERIOD_MODES.map((p) => (
               <button
                 key={p.key}
                 type="button"
                 onClick={() => setMode(p.key)}
                 className={clsx(
-                  'rounded-md px-3.5 py-1.5 text-xs font-semibold transition-colors',
+                  'min-h-[40px] sm:min-h-[36px] rounded-md px-2 sm:px-3.5 py-1.5 text-xs font-semibold transition-colors',
                   mode === p.key
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-600 hover:text-slate-900'
@@ -377,62 +377,99 @@ export const TripDieselAnalyticsSection: React.FC<TripDieselAnalyticsSectionProp
             />
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase text-slate-600">
-                <tr>
-                  <th className="px-4 py-3">Trip ID</th>
-                  <th className="px-4 py-3">Starting Location</th>
-                  <th className="px-4 py-3">Destination</th>
-                  <th className="px-4 py-3">Trip Date</th>
-                  <th className="px-4 py-3 text-right">Distance (KM)</th>
-                  <th className="px-4 py-3 text-right">Diesel Consumed (L)</th>
-                  <th className="px-4 py-3 text-right">Diesel Price (₹/L)</th>
-                  <th className="px-4 py-3 text-right">Total Diesel Cost (₹)</th>
-                  <th className="px-4 py-3 text-center">Trip Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredTrips.map((trip) => (
-                  <tr
-                    key={trip.id}
-                    onClick={() => setSelectedTrip(trip)}
-                    className="cursor-pointer hover:bg-blue-50/50 transition-colors"
-                  >
-                    <td className="whitespace-nowrap px-4 py-3 font-mono font-bold text-blue-700">
-                      {trip.id}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-800">
-                      {trip.startLocation}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-800">
-                      {trip.destination}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">
-                      {formatDateOnly(`${trip.tripDate}T00:00:00Z`)}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right font-mono text-slate-800">
-                      {trip.distanceKm.toLocaleString('en-IN')} km
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right font-mono font-semibold text-slate-900">
-                      {formatLiters(trip.dieselLitres)}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right font-mono text-slate-600">
-                      ₹{trip.dieselPricePerL.toFixed(2)}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right font-mono font-bold text-slate-900">
+          <>
+            {/* Mobile Trip Cards (< 768px) — zero horizontal scrolling */}
+            <div className="divide-y divide-slate-100 md:hidden">
+              {filteredTrips.map((trip) => (
+                <button
+                  key={trip.id}
+                  type="button"
+                  onClick={() => setSelectedTrip(trip)}
+                  className="flex w-full flex-col gap-2.5 p-4 text-left hover:bg-blue-50/40 transition-colors"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-xs font-bold text-blue-700">{trip.id}</span>
+                    <Badge variant={STATUS_BADGE[trip.status]} size="sm" dot>
+                      {trip.status}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-slate-900">
+                      {trip.startLocation} → {trip.destination}
+                    </p>
+                    <p className="font-mono text-sm font-bold text-slate-900 flex-shrink-0">
                       {formatINR(trip.totalDieselCost)}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-center">
-                      <Badge variant={STATUS_BADGE[trip.status]} size="sm" dot>
-                        {trip.status}
-                      </Badge>
-                    </td>
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500">
+                    <span>{formatDateOnly(`${trip.tripDate}T00:00:00Z`)}</span>
+                    <span className="font-mono">
+                      {trip.distanceKm.toLocaleString('en-IN')} km · {formatLiters(trip.dieselLitres)} @ ₹
+                      {trip.dieselPricePerL.toFixed(2)}/L
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* Desktop Table (>= 768px) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase text-slate-600">
+                  <tr>
+                    <th className="px-4 py-3">Trip ID</th>
+                    <th className="px-4 py-3">Starting Location</th>
+                    <th className="px-4 py-3">Destination</th>
+                    <th className="px-4 py-3">Trip Date</th>
+                    <th className="px-4 py-3 text-right">Distance (KM)</th>
+                    <th className="px-4 py-3 text-right">Diesel Consumed (L)</th>
+                    <th className="px-4 py-3 text-right">Diesel Price (₹/L)</th>
+                    <th className="px-4 py-3 text-right">Total Diesel Cost (₹)</th>
+                    <th className="px-4 py-3 text-center">Trip Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredTrips.map((trip) => (
+                    <tr
+                      key={trip.id}
+                      onClick={() => setSelectedTrip(trip)}
+                      className="cursor-pointer hover:bg-blue-50/50 transition-colors"
+                    >
+                      <td className="whitespace-nowrap px-4 py-3 font-mono font-bold text-blue-700">
+                        {trip.id}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-800">
+                        {trip.startLocation}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-800">
+                        {trip.destination}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                        {formatDateOnly(`${trip.tripDate}T00:00:00Z`)}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right font-mono text-slate-800">
+                        {trip.distanceKm.toLocaleString('en-IN')} km
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right font-mono font-semibold text-slate-900">
+                        {formatLiters(trip.dieselLitres)}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right font-mono text-slate-600">
+                        ₹{trip.dieselPricePerL.toFixed(2)}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right font-mono font-bold text-slate-900">
+                        {formatINR(trip.totalDieselCost)}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-center">
+                        <Badge variant={STATUS_BADGE[trip.status]} size="sm" dot>
+                          {trip.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 

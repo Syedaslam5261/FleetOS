@@ -134,18 +134,18 @@ export const LorryManagementPage: React.FC = () => {
         </div>
 
         {/* Right side: Export button and Blue + Add Lorry button */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <button
             onClick={() => showToast('Exporting Lorry Registry...')}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs transition-colors"
+            className="inline-flex min-h-[44px] flex-1 sm:flex-initial items-center justify-center gap-2 px-3.5 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs transition-colors"
           >
-            <Download className="w-3.5 h-3.5 text-slate-500" />
+            <Download className="w-4 h-4 text-slate-500" />
             Export
           </button>
 
           <button
             onClick={handleOpenAddModal}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-colors"
+            className="inline-flex min-h-[44px] flex-1 sm:flex-initial items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-colors"
           >
             <Plus className="w-4 h-4" />
             Add Lorry

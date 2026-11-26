@@ -111,11 +111,11 @@ export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
                 handleChoose(results[0]);
               }
             }}
-            className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-8 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="min-h-[44px] w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-9 pr-9 text-sm sm:text-xs text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
           <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
             {isSearching ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
+              <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
             ) : value ? (
               <button
                 type="button"
@@ -124,10 +124,10 @@ export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
                   setQuery('');
                   setResults([]);
                 }}
-                className="text-emerald-600 hover:text-slate-600"
+                className="flex h-8 w-8 items-center justify-center text-emerald-600 hover:text-slate-600"
                 title="Clear location"
               >
-                <Check className="h-3.5 w-3.5" />
+                <Check className="h-4 w-4" />
               </button>
             ) : null}
           </div>
@@ -137,8 +137,9 @@ export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
           <button
             type="button"
             onClick={onRemove}
-            className="rounded-lg border border-slate-200 p-2 text-slate-400 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 transition-colors"
             title="Remove stop"
+            aria-label="Remove stop"
           >
             <X className="h-4 w-4" />
           </button>

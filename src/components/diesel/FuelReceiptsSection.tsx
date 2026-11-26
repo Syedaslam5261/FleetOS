@@ -68,44 +68,77 @@ export const FuelReceiptsSection: React.FC<Props> = ({ entries, regOf }) => {
       {rows.length === 0 ? (
         <ProfileEmptyState title="No receipts with this status" message="Choose another verification status." />
       ) : (
-        <TableShell
-          headers={[
-            { label: 'Date' },
-            { label: 'Lorry' },
-            { label: 'Station' },
-            { label: 'Receipt No.' },
-            { label: 'Litres', right: true },
-            { label: 'Rate / L', right: true },
-            { label: 'Amount', right: true },
-            { label: 'Payment' },
-            { label: 'Verification' },
-          ]}
-        >
-          {rows.slice(0, visible).map((e) => (
-            <tr key={e.id} className="hover:bg-slate-50/70">
-              <td className="whitespace-nowrap px-4 py-3 text-slate-700">
-                {formatDateOnly(e.date)}
-                <p className="font-mono text-[10px] text-slate-400">Odo {e.odometerKm.toLocaleString('en-IN')} km</p>
-              </td>
-              <td className="whitespace-nowrap px-4 py-3 font-mono font-bold text-slate-900">{regOf(e.lorryId)}</td>
-              <td className="px-4 py-3 text-slate-800">
-                {e.station}
-                {!e.fullTank && <p className="text-[10px] text-amber-700">Partial fill</p>}
-              </td>
-              <td className="whitespace-nowrap px-4 py-3 font-mono text-slate-600">{e.receiptNo}</td>
-              <td className="whitespace-nowrap px-4 py-3 text-right font-mono font-semibold">{formatLiters(e.litres)}</td>
-              <td className="whitespace-nowrap px-4 py-3 text-right font-mono text-slate-600">₹{e.ratePerLitre.toFixed(2)}</td>
-              <td className="whitespace-nowrap px-4 py-3 text-right font-mono font-bold text-slate-900">{formatINR(e.amount)}</td>
-              <td className="whitespace-nowrap px-4 py-3 text-slate-600">{e.paymentMode}</td>
-              <td className="px-4 py-3">
-                <Badge variant={VARIANT[e.verification]} size="sm" dot>
-                  {e.verification}
-                </Badge>
-                {e.flagReason && <p className="mt-1 max-w-[180px] text-[10px] text-rose-700">{e.flagReason}</p>}
-              </td>
-            </tr>
-          ))}
-        </TableShell>
+        <>
+          {/* Mobile Receipt Cards (< 768px) */}
+          <div className="space-y-3 md:hidden">
+            {rows.slice(0, visible).map((e) => (
+              <div
+                key={e.id}
+                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-2 text-xs"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="font-mono font-bold text-slate-900">{e.receiptNo}</p>
+                    <p className="text-[11px] text-slate-500">{formatDateOnly(e.date)} · {e.paymentMode}</p>
+                  </div>
+                  <Badge variant={VARIANT[e.verification]} size="sm" dot>
+                    {e.verification}
+                  </Badge>
+                </div>
+                <p className="font-medium text-slate-800">{e.station}</p>
+                <div className="flex items-center justify-between border-t border-slate-100 pt-2">
+                  <span className="font-mono text-slate-600">
+                    {formatLiters(e.litres)} @ ₹{e.ratePerLitre.toFixed(2)}/L
+                  </span>
+                  <span className="font-mono text-sm font-bold text-slate-900">{formatINR(e.amount)}</span>
+                </div>
+                {e.flagReason && <p className="text-[11px] text-rose-700">{e.flagReason}</p>}
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table (>= 768px) */}
+          <div className="hidden md:block">
+            <TableShell
+              headers={[
+                { label: 'Date' },
+                { label: 'Lorry' },
+                { label: 'Station' },
+                { label: 'Receipt No.' },
+                { label: 'Litres', right: true },
+                { label: 'Rate / L', right: true },
+                { label: 'Amount', right: true },
+                { label: 'Payment' },
+                { label: 'Verification' },
+              ]}
+            >
+              {rows.slice(0, visible).map((e) => (
+                <tr key={e.id} className="hover:bg-slate-50/70">
+                  <td className="whitespace-nowrap px-4 py-3 text-slate-700">
+                    {formatDateOnly(e.date)}
+                    <p className="font-mono text-[10px] text-slate-400">Odo {e.odometerKm.toLocaleString('en-IN')} km</p>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 font-mono font-bold text-slate-900">{regOf(e.lorryId)}</td>
+                  <td className="px-4 py-3 text-slate-800">
+                    {e.station}
+                    {!e.fullTank && <p className="text-[10px] text-amber-700">Partial fill</p>}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 font-mono text-slate-600">{e.receiptNo}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-right font-mono font-semibold">{formatLiters(e.litres)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-right font-mono text-slate-600">₹{e.ratePerLitre.toFixed(2)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-right font-mono font-bold text-slate-900">{formatINR(e.amount)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-slate-600">{e.paymentMode}</td>
+                  <td className="px-4 py-3">
+                    <Badge variant={VARIANT[e.verification]} size="sm" dot>
+                      {e.verification}
+                    </Badge>
+                    {e.flagReason && <p className="mt-1 max-w-[180px] text-[10px] text-rose-700">{e.flagReason}</p>}
+                  </td>
+                </tr>
+              ))}
+            </TableShell>
+          </div>
+        </>
       )}
 
       <div className="flex items-center justify-between text-xs text-slate-500">
