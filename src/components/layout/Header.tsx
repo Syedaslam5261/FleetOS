@@ -1,63 +1,57 @@
 import React from 'react';
-import { Menu, Search, Bell } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Truck } from 'lucide-react';
 
-interface HeaderProps {
-  onToggleSidebarMobile: () => void;
-  onToggleSidebarCollapse: () => void;
-  isSidebarCollapsed: boolean;
-}
+const PAGE_TITLES: Array<{ prefix: string; title: string }> = [
+  { prefix: '/fleet', title: 'Lorry Management' },
+  { prefix: '/diesel', title: 'Diesel Management' },
+  { prefix: '/trips', title: 'Trips' },
+  { prefix: '/maintenance', title: 'Maintenance' },
+  { prefix: '/expenses', title: 'Expenses' },
+  { prefix: '/reports', title: 'Reports' },
+  { prefix: '/settings', title: 'Settings' },
+];
 
-export const Header: React.FC<HeaderProps> = ({
-  onToggleSidebarMobile,
-  onToggleSidebarCollapse,
-  isSidebarCollapsed,
-}) => {
-  const handleMenuClick = () => {
-    if (window.innerWidth >= 1024) {
-      onToggleSidebarCollapse();
-    } else {
-      onToggleSidebarMobile();
-    }
-  };
+export const Header: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const match = PAGE_TITLES.find((p) => location.pathname.startsWith(p.prefix));
+  const pageTitle = match ? match.title : 'Lorry Management';
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-4 lg:px-8">
-      {/* Left: Hamburger menu toggle */}
-      <div className="flex items-center gap-4 flex-1 max-w-xl">
-        <button
-          onClick={handleMenuClick}
-          className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-          title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          aria-label="Toggle sidebar"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
+    <header className="sticky top-0 z-30 w-full border-b border-slate-200 bg-white">
+      <div className="flex h-16 w-full items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        {/* Left: FleetOS Logo + Relevant Page Title */}
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+          <button
+            type="button"
+            onClick={() => navigate('/fleet')}
+            className="flex items-center gap-2.5 flex-shrink-0 focus:outline-none"
+            title="FleetOS — Lorry Management"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white shadow-sm">
+              <Truck className="h-4 w-4" />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="font-mono text-base font-bold tracking-tight text-[#0b1329]">FleetOS</span>
+              <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-blue-600">
+                Pro
+              </span>
+            </div>
+          </button>
 
-        {/* Global Search: "Search lorry, trip, driver..." */}
-        <div className="relative w-full max-w-md">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search lorry, trip, driver..."
-            className="w-full rounded-lg border border-slate-200 bg-slate-50/50 pl-10 pr-4 py-2 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
-          />
+          <span className="h-6 w-px bg-slate-200 flex-shrink-0" aria-hidden="true" />
+          <h1 className="truncate text-sm font-semibold text-slate-800 sm:text-base">{pageTitle}</h1>
         </div>
-      </div>
 
-      {/* Right: Notifications & Logged-in User Initials Avatar */}
-      <div className="flex items-center gap-4">
-        {/* Notification Icon */}
-        <button
-          className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors"
-          title="Notifications"
-        >
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white" />
-        </button>
-
-        {/* User Initials Avatar */}
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white font-bold text-xs shadow-sm">
+        {/* Right: Logged-in Fleet Owner Avatar */}
+        <div className="flex items-center gap-2.5 flex-shrink-0">
+          <div className="hidden sm:block text-right">
+            <p className="text-xs font-semibold text-slate-800 leading-tight">Syed Aslam</p>
+            <p className="text-[11px] text-slate-500 leading-tight">Fleet Owner</p>
+          </div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-sm">
             SA
           </div>
         </div>

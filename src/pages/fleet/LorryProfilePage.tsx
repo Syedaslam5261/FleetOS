@@ -116,7 +116,7 @@ export const LorryProfilePage: React.FC = () => {
     <div key={lorryId} className="min-h-screen w-full bg-slate-50 font-sans">
       {/* Simple Full-Width Top Header: FleetOS Logo, Selected Lorry Reg Number, Back Button */}
       <header className="sticky top-0 z-30 w-full border-b border-slate-200 bg-white">
-        <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 w-full items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
           {/* Left: FleetOS Logo + Selected Lorry Registration Number */}
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
             <button
@@ -170,7 +170,7 @@ export const LorryProfilePage: React.FC = () => {
       </header>
 
       {/* Full-Width Main Content */}
-      <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+      <main className="w-full px-4 py-6 sm:px-6 lg:px-8">
         {!lorry ? (
           <div className="mx-auto max-w-md py-20 text-center">
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
