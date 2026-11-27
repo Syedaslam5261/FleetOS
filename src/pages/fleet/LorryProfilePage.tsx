@@ -32,7 +32,7 @@ import { FuelOverviewSection } from '../../components/diesel/FuelOverviewSection
 import { FuelCalculatorSection } from '../../components/diesel/FuelCalculatorSection';
 import { FuelReceiptsSection } from '../../components/diesel/FuelReceiptsSection';
 import { FuelReceiptScannerSection } from '../../components/diesel/FuelReceiptScannerSection';
-import { TripDieselAnalyticsSection } from '../../components/diesel/TripDieselAnalyticsSection';
+import { PurchasedDieselReportsSection } from '../../components/diesel/PurchasedDieselReportsSection';
 
 const STATUS_STYLES: Record<LorryStatus, string> = {
   Active: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -301,14 +301,14 @@ export const LorryProfilePage: React.FC = () => {
                       {activeDieselSub === 'calculator'
                         ? 'Fuel Calculator'
                         : activeDieselSub === 'reports'
-                          ? 'Trip-wise Diesel Cost'
+                          ? 'Purchased Diesel Reports'
                           : 'Smart Fuel Receipt Scanner'}
                     </h1>
                     <p className="text-xs text-slate-500">
                       {activeDieselSub === 'calculator'
                         ? "Plan your truck's fuel requirements and trip expenses."
                         : activeDieselSub === 'reports'
-                          ? 'Track diesel expenses based on trips completed by your lorry.'
+                          ? 'Track every diesel purchase, receipt and payment for your lorries.'
                           : 'Capture or upload a diesel receipt, verify OCR-extracted fields, and confirm payment status.'}
                     </p>
                   </div>
@@ -348,7 +348,11 @@ export const LorryProfilePage: React.FC = () => {
                   />
                 )}
                 {activeDieselSub === 'reports' && (
-                  <TripDieselAnalyticsSection key={lorry.id} lorry={lorry} />
+                  <PurchasedDieselReportsSection
+                    key={lorry.id}
+                    lorry={lorry}
+                    onSwitchLorry={(nextId) => navigate(`/fleet/${nextId}/diesel/reports`)}
+                  />
                 )}
               </div>
             )}

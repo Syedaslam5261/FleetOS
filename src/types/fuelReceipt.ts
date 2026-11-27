@@ -23,7 +23,10 @@ export interface FuelReceiptRecord {
   id: string;
   lorryId: string;
   lorryRegistration: string;
+  /** Linked trip ID when assigned; undefined means Unassigned Fuel Purchase. */
+  tripId?: string;
   fuelStation: string;
+  stationLocation?: string;
   receiptNumber: string;
   receiptDate: string; // YYYY-MM-DD
   receiptTime?: string; // HH:MM
@@ -41,3 +44,14 @@ export interface FuelReceiptRecord {
   isDemoSeed?: boolean;
   createdAt: string; // ISO UTC
 }
+
+export interface FleetTripRecord {
+  id: string;
+  lorryId: string;
+  startLocation: string;
+  destination: string;
+  startDate: string; // YYYY-MM-DD
+  completionDate: string; // YYYY-MM-DD
+  status: 'Completed' | 'In Transit' | 'Scheduled';
+}
+

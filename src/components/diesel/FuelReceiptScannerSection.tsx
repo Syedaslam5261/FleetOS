@@ -23,6 +23,7 @@ import {
 } from '../../types/fuelReceipt';
 import { LorryService } from '../../services/lorryService';
 import { FuelReceiptService } from '../../services/fuelReceiptService';
+import { TripService } from '../../services/tripService';
 import { runReceiptOcr } from '../../utils/receiptOcrParser';
 import { formatINR } from '../../utils/formatters';
 
@@ -71,7 +72,9 @@ export const FuelReceiptScannerSection: React.FC<FuelReceiptScannerSectionProps>
 
   // Editable verification form fields
   const [selectedLorryId, setSelectedLorryId] = useState(lorry.id);
+  const [selectedTripId, setSelectedTripId] = useState<string>('');
   const [fuelStation, setFuelStation] = useState('');
+  const [stationLocation, setStationLocation] = useState('');
   const [receiptNumber, setReceiptNumber] = useState('');
   const [receiptDate, setReceiptDate] = useState(todayIso());
   const [receiptTime, setReceiptTime] = useState('');
@@ -79,6 +82,8 @@ export const FuelReceiptScannerSection: React.FC<FuelReceiptScannerSectionProps>
   const [pricePerLitre, setPricePerLitre] = useState('');
   const [totalAmount, setTotalAmount] = useState('');
   const [gstDetails, setGstDetails] = useState('');
+
+  const lorryTrips = useMemo(() => TripService.getByLorryId(selectedLorryId), [selectedLorryId]);
 
   // Payment status — ALWAYS starts unselected; owner must explicitly confirm PAID or UNPAID
   const [paymentStatus, setPaymentStatus] = useState<ReceiptPaymentStatus | null>(null);
@@ -309,7 +314,9 @@ export const FuelReceiptScannerSection: React.FC<FuelReceiptScannerSectionProps>
       FuelReceiptService.addReceipt({
         lorryId: targetLorry.id,
         lorryRegistration: targetLorry.registrationNumber,
+        tripId: selectedTripId || undefined,
         fuelStation: fuelStation.trim(),
+        stationLocation: stationLocation.trim() || undefined,
         receiptNumber: receiptNumber.trim(),
         receiptDate,
         receiptTime: receiptTime || undefined,
@@ -650,16 +657,29 @@ export const FuelReceiptScannerSection: React.FC<FuelReceiptScannerSectionProps>
             )}
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="sm:col-span-2">
+              <div>
                 <label className="mb-1 block text-xs font-semibold text-slate-700">
                   Fuel Station Name *
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. IndianOil COCO Plaza, Pune-Satara Hwy"
+                  placeholder="e.g. IndianOil COCO Plaza"
                   value={fuelStation}
                   onChange={(e) => setFuelStation(e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-700">
+                  Station Location (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Shirwal, NH-48, Maharashtra"
+                  value={stationLocation}
+                  onChange={(e) => setStationLocation(e.target.value)}
                   className={inputCls}
                 />
               </div>
@@ -684,12 +704,33 @@ export const FuelReceiptScannerSection: React.FC<FuelReceiptScannerSectionProps>
                 </label>
                 <select
                   value={selectedLorryId}
-                  onChange={(e) => setSelectedLorryId(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedLorryId(e.target.value);
+                    setSelectedTripId('');
+                  }}
                   className={`${inputCls} font-mono font-semibold`}
                 >
                   {allLorries.map((l) => (
                     <option key={l.id} value={l.id}>
                       {l.registrationNumber} ({l.vehicleType})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="mb-1 block text-xs font-semibold text-slate-700">
+                  Assign to Trip (Optional — leave Unassigned if not linked)
+                </label>
+                <select
+                  value={selectedTripId}
+                  onChange={(e) => setSelectedTripId(e.target.value)}
+                  className={inputCls}
+                >
+                  <option value="">Unassigned Fuel Purchase</option>
+                  {lorryTrips.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.id} — {t.startLocation} → {t.destination} ({t.startDate} to {t.completionDate})
                     </option>
                   ))}
                 </select>

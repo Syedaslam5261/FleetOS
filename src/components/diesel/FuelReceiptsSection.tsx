@@ -1,39 +1,26 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  AlertCircle,
   CheckCircle2,
   Eye,
-  FileImage,
   ScanLine,
   Search,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button } from '../common/Button';
-import { Modal } from '../common/Modal';
+import { FuelReceiptDetailModal } from './FuelReceiptDetailModal';
 import { ProfileEmptyState } from '../fleet/profile/ProfileParts';
 import { Lorry } from '../../types/lorry';
 import {
   FuelReceiptRecord,
-  ReceiptPaymentMethod,
   ReceiptPaymentStatus,
 } from '../../types/fuelReceipt';
 import { FuelReceiptService } from '../../services/fuelReceiptService';
-import { formatDate, formatDateOnly, formatINR, formatLiters } from '../../utils/formatters';
+import { formatDateOnly, formatINR, formatLiters } from '../../utils/formatters';
 
 interface FuelReceiptsSectionProps {
   lorry: Lorry;
   onOpenScanner: () => void;
 }
-
-const PAYMENT_METHODS: ReceiptPaymentMethod[] = [
-  'Cash',
-  'UPI',
-  'Card',
-  'Bank Transfer',
-  'Other',
-];
-
-const todayIso = () => new Date().toISOString().slice(0, 10);
 
 export const FuelReceiptsSection: React.FC<FuelReceiptsSectionProps> = ({
   lorry,
@@ -47,11 +34,9 @@ export const FuelReceiptsSection: React.FC<FuelReceiptsSectionProps> = ({
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
-  // Receipt viewer + Mark Paid confirmation state
+  // Shared receipt viewer modal state
   const [selectedReceipt, setSelectedReceipt] = useState<FuelReceiptRecord | null>(null);
-  const [showMarkPaidForm, setShowMarkPaidForm] = useState(false);
-  const [payDate, setPayDate] = useState(todayIso());
-  const [payMethod, setPayMethod] = useState<ReceiptPaymentMethod>('UPI');
+  const [openMarkPaid, setOpenMarkPaid] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -94,12 +79,8 @@ export const FuelReceiptsSection: React.FC<FuelReceiptsSectionProps> = ({
     });
   }, [receipts, statusFilter, fromDate, toDate, searchQuery]);
 
-  const handleConfirmMarkPaid = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedReceipt) return;
-    FuelReceiptService.markAsPaid(selectedReceipt.id, payDate, payMethod);
-    setShowMarkPaidForm(false);
-    setNotice(`Receipt ${selectedReceipt.receiptNumber} marked as PAID (${payMethod}).`);
+  const handleMarkedPaid = (updated: FuelReceiptRecord) => {
+    setNotice(`Receipt ${updated.receiptNumber} marked as PAID (${updated.paymentMethod}).`);
     window.setTimeout(() => setNotice(null), 4000);
   };
 
@@ -247,7 +228,7 @@ export const FuelReceiptsSection: React.FC<FuelReceiptsSectionProps> = ({
                     type="button"
                     onClick={() => {
                       setSelectedReceipt(r);
-                      setShowMarkPaidForm(false);
+                      setOpenMarkPaid(false);
                     }}
                     className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-lg bg-blue-50 px-3 text-xs font-semibold text-blue-700 hover:bg-blue-100"
                   >
@@ -258,8 +239,7 @@ export const FuelReceiptsSection: React.FC<FuelReceiptsSectionProps> = ({
                       type="button"
                       onClick={() => {
                         setSelectedReceipt(r);
-                        setShowMarkPaidForm(true);
-                        setPayDate(todayIso());
+                        setOpenMarkPaid(true);
                       }}
                       className="flex min-h-[44px] items-center justify-center rounded-lg border border-emerald-300 bg-emerald-50 px-3 text-xs font-bold text-emerald-700 hover:bg-emerald-100"
                     >
@@ -320,7 +300,7 @@ export const FuelReceiptsSection: React.FC<FuelReceiptsSectionProps> = ({
                             type="button"
                             onClick={() => {
                               setSelectedReceipt(r);
-                              setShowMarkPaidForm(false);
+                              setOpenMarkPaid(false);
                             }}
                             className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50"
                           >
@@ -331,8 +311,7 @@ export const FuelReceiptsSection: React.FC<FuelReceiptsSectionProps> = ({
                               type="button"
                               onClick={() => {
                                 setSelectedReceipt(r);
-                                setShowMarkPaidForm(true);
-                                setPayDate(todayIso());
+                                setOpenMarkPaid(true);
                               }}
                               className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
                             >
@@ -354,181 +333,16 @@ export const FuelReceiptsSection: React.FC<FuelReceiptsSectionProps> = ({
         Confirmed fuel receipts for {lorry.registrationNumber} only (kept separate from Fuel Calculator estimates). Demo session storage resets on page reload.
       </p>
 
-      {/* View Receipt & Update Payment Status Modal */}
-      {selectedReceipt && (
-        <Modal
-          isOpen={!!selectedReceipt}
-          onClose={() => {
-            setSelectedReceipt(null);
-            setShowMarkPaidForm(false);
-          }}
-          title={`Fuel Receipt — ${selectedReceipt.receiptNumber}`}
-          subtitle={`${selectedReceipt.lorryRegistration} · ${selectedReceipt.fuelStation}`}
-          maxWidth="2xl"
-        >
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {/* Original Image */}
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  Receipt Image
-                </p>
-                {selectedReceipt.imageDataUrl ? (
-                  <img
-                    src={selectedReceipt.imageDataUrl}
-                    alt={`Receipt ${selectedReceipt.receiptNumber}`}
-                    className="max-h-72 w-full rounded-lg border border-slate-200 bg-white object-contain"
-                  />
-                ) : (
-                  <div className="flex h-48 flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white p-4 text-center text-xs text-slate-400">
-                    <FileImage className="mb-2 h-7 w-7 text-slate-300" />
-                    <p>No image attached (seeded demo receipt).</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Details */}
-              <div className="space-y-3 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs text-slate-500">{selectedReceipt.id}</span>
-                  {renderStatusBadge(selectedReceipt.paymentStatus)}
-                </div>
-
-                <dl className="space-y-2 rounded-xl border border-slate-200 bg-white p-3.5">
-                  <div className="flex justify-between gap-2">
-                    <dt className="text-slate-500">Fuel Station</dt>
-                    <dd className="text-right font-semibold text-slate-900">{selectedReceipt.fuelStation}</dd>
-                  </div>
-                  <div className="flex justify-between gap-2">
-                    <dt className="text-slate-500">Receipt No.</dt>
-                    <dd className="font-mono font-semibold text-slate-900">{selectedReceipt.receiptNumber}</dd>
-                  </div>
-                  <div className="flex justify-between gap-2">
-                    <dt className="text-slate-500">Receipt Date</dt>
-                    <dd className="font-medium text-slate-800">
-                      {formatDateOnly(`${selectedReceipt.receiptDate}T00:00:00Z`)}
-                      {selectedReceipt.receiptTime ? ` · ${selectedReceipt.receiptTime}` : ''}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-2">
-                    <dt className="text-slate-500">Lorry</dt>
-                    <dd className="font-mono font-bold text-slate-900">{selectedReceipt.lorryRegistration}</dd>
-                  </div>
-                  <div className="flex justify-between gap-2 border-t border-slate-100 pt-2">
-                    <dt className="text-slate-500">Diesel Quantity</dt>
-                    <dd className="font-mono font-semibold text-slate-900">{formatLiters(selectedReceipt.dieselLitres)}</dd>
-                  </div>
-                  <div className="flex justify-between gap-2">
-                    <dt className="text-slate-500">Price per Litre</dt>
-                    <dd className="font-mono text-slate-800">₹{selectedReceipt.pricePerLitre.toFixed(2)}/L</dd>
-                  </div>
-                  <div className="flex justify-between gap-2 border-t border-slate-100 pt-2">
-                    <dt className="font-bold text-slate-900">Total Amount</dt>
-                    <dd className="font-mono text-sm font-bold text-blue-700">{formatINR(selectedReceipt.totalAmount)}</dd>
-                  </div>
-                  {selectedReceipt.gstDetails && (
-                    <div className="flex justify-between gap-2">
-                      <dt className="text-slate-500">GST Details</dt>
-                      <dd className="font-mono text-slate-700">{selectedReceipt.gstDetails}</dd>
-                    </div>
-                  )}
-                  {selectedReceipt.paymentStatus === 'PAID' && (
-                    <>
-                      <div className="flex justify-between gap-2 border-t border-slate-100 pt-2">
-                        <dt className="text-slate-500">Payment Date</dt>
-                        <dd className="font-semibold text-emerald-700">
-                          {selectedReceipt.paymentDate
-                            ? formatDateOnly(`${selectedReceipt.paymentDate}T00:00:00Z`)
-                            : '—'}
-                        </dd>
-                      </div>
-                      <div className="flex justify-between gap-2">
-                        <dt className="text-slate-500">Payment Method</dt>
-                        <dd className="font-semibold text-emerald-700">{selectedReceipt.paymentMethod}</dd>
-                      </div>
-                    </>
-                  )}
-                  <div className="flex justify-between gap-2 border-t border-slate-100 pt-2 text-[11px] text-slate-400">
-                    <dt>Created</dt>
-                    <dd>{formatDate(selectedReceipt.createdAt)}</dd>
-                  </div>
-                </dl>
-              </div>
-            </div>
-
-            {/* Update UNPAID -> PAID with Confirmation */}
-            {selectedReceipt.paymentStatus === 'UNPAID' && (
-              <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-4 space-y-3">
-                {!showMarkPaidForm ? (
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-start gap-2 text-xs text-rose-800">
-                      <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-rose-600" />
-                      <span>This receipt is currently <strong>UNPAID</strong>. Record payment once settled.</span>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="primary"
-                      size="sm"
-                      onClick={() => {
-                        setPayDate(todayIso());
-                        setShowMarkPaidForm(true);
-                      }}
-                      className="min-h-[42px]"
-                    >
-                      Mark as PAID
-                    </Button>
-                  </div>
-                ) : (
-                  <form onSubmit={handleConfirmMarkPaid} className="space-y-3">
-                    <p className="text-xs font-bold text-slate-900">
-                      Confirm Payment for {selectedReceipt.receiptNumber} ({formatINR(selectedReceipt.totalAmount)})
-                    </p>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <div>
-                        <label className="mb-1 block text-xs font-semibold text-slate-700">Payment Date *</label>
-                        <input
-                          type="date"
-                          required
-                          value={payDate}
-                          onChange={(e) => setPayDate(e.target.value)}
-                          className="min-h-[42px] w-full rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-900"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-1 block text-xs font-semibold text-slate-700">Payment Method *</label>
-                        <select
-                          value={payMethod}
-                          onChange={(e) => setPayMethod(e.target.value as ReceiptPaymentMethod)}
-                          className="min-h-[42px] w-full rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-900"
-                        >
-                          {PAYMENT_METHODS.map((m) => (
-                            <option key={m} value={m}>
-                              {m}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowMarkPaidForm(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button type="submit" variant="primary" size="sm">
-                        Confirm Payment
-                      </Button>
-                    </div>
-                  </form>
-                )}
-              </div>
-            )}
-          </div>
-        </Modal>
-      )}
+      {/* Shared View Receipt & Update Payment Status Modal */}
+      <FuelReceiptDetailModal
+        receipt={selectedReceipt}
+        initialOpenMarkPaid={openMarkPaid}
+        onClose={() => {
+          setSelectedReceipt(null);
+          setOpenMarkPaid(false);
+        }}
+        onMarkedPaid={handleMarkedPaid}
+      />
     </div>
   );
 };
