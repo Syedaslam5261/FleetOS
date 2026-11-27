@@ -79,7 +79,16 @@ export const RoutePlannerMap: React.FC<RoutePlannerMapProps> = ({
     layerGroupRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
 
+    let observer: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
+      observer = new ResizeObserver(() => {
+        map.invalidateSize();
+      });
+      observer.observe(containerRef.current);
+    }
+
     return () => {
+      observer?.disconnect();
       map.remove();
       mapRef.current = null;
       layerGroupRef.current = null;

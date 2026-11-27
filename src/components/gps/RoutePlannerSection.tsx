@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowDown,
   ArrowUp,
@@ -69,10 +69,17 @@ export const RoutePlannerSection: React.FC<RoutePlannerSectionProps> = ({ lorry 
   const [selectedRouteIdx, setSelectedRouteIdx] = useState(0);
   const [isCalculating, setIsCalculating] = useState(false);
   const [routeError, setRouteError] = useState<string | null>(null);
+  const routeAbortRef = useRef<AbortController | null>(null);
 
   // Action feedback & Saved routes
   const [feedback, setFeedback] = useState<string | null>(null);
   const [savedTick, setSavedTick] = useState(0);
+
+  useEffect(() => {
+    return () => {
+      routeAbortRef.current?.abort();
+    };
+  }, []);
 
   useEffect(() => {
     setSelectedLorryId(lorry.id);
@@ -94,6 +101,8 @@ export const RoutePlannerSection: React.FC<RoutePlannerSectionProps> = ({ lorry 
 
   // Clear calculated routes whenever waypoints change so user recalculates accurately
   const invalidateCalculation = () => {
+    routeAbortRef.current?.abort();
+    setIsCalculating(false);
     setRoutes([]);
     setSelectedRouteIdx(0);
     setRouteError(null);
@@ -220,20 +229,30 @@ export const RoutePlannerSection: React.FC<RoutePlannerSectionProps> = ({ lorry 
       return;
     }
 
+    routeAbortRef.current?.abort();
+    const controller = new AbortController();
+    routeAbortRef.current = controller;
+
     setIsCalculating(true);
     try {
-      const results = await fetchRoadRouteAlternatives(orderedWaypoints);
-      setRoutes(results);
-      setSelectedRouteIdx(0);
+      const results = await fetchRoadRouteAlternatives(orderedWaypoints, controller.signal);
+      if (!controller.signal.aborted) {
+        setRoutes(results);
+        setSelectedRouteIdx(0);
+      }
     } catch (err) {
-      setRoutes([]);
-      setRouteError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to calculate road route. Please verify locations and try again.'
-      );
+      if (!controller.signal.aborted) {
+        setRoutes([]);
+        setRouteError(
+          err instanceof Error
+            ? err.message
+            : 'Failed to calculate road route. Please verify locations and try again.'
+        );
+      }
     } finally {
-      setIsCalculating(false);
+      if (!controller.signal.aborted) {
+        setIsCalculating(false);
+      }
     }
   };
 

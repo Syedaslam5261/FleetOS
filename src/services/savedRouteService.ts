@@ -23,14 +23,55 @@ export interface SavedPlannedRoute {
 
 type Listener = () => void;
 
+const STORAGE_KEY = 'fleetos_saved_routes_v1';
+
 /**
- * Reactive session store for Planned Routes.
+ * Reactive store for Planned Routes with browser localStorage persistence.
  * Strictly isolated from Trip Management — saving a route NEVER creates or starts a trip.
  */
 class SavedRouteServiceClass {
   private routes: SavedPlannedRoute[] = [];
   private listeners: Set<Listener> = new Set();
   private seq = 1;
+
+  constructor() {
+    this.hydrateFromStorage();
+  }
+
+  private hydrateFromStorage() {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as SavedPlannedRoute[];
+      if (Array.isArray(parsed)) {
+        this.routes = parsed;
+        const maxSeq = parsed.reduce((max, r) => {
+          const n = Number(r.id.split('-').pop() ?? 0);
+          return Number.isFinite(n) && n > max ? n : max;
+        }, 0);
+        this.seq = maxSeq + 1;
+      }
+    } catch {
+      // Ignore storage access errors (private mode / non-browser)
+    }
+  }
+
+  private persistToStorage() {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.routes));
+    } catch {
+      // Ignore quota / non-browser storage errors
+    }
+  }
+
+  /** Reloads state from localStorage (useful for verifying persistence across reloads). */
+  reloadFromStorage(): void {
+    this.routes = [];
+    this.hydrateFromStorage();
+    this.notify();
+  }
 
   subscribe(listener: Listener): () => void {
     this.listeners.add(listener);
@@ -63,12 +104,14 @@ class SavedRouteServiceClass {
       createdAt: new Date().toISOString(),
     };
     this.routes.unshift(record);
+    this.persistToStorage();
     this.notify();
     return record;
   }
 
   deleteRoute(id: string): void {
     this.routes = this.routes.filter((r) => r.id !== id);
+    this.persistToStorage();
     this.notify();
   }
 }
