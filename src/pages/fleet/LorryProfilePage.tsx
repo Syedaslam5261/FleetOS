@@ -25,7 +25,6 @@ import { filterEntries } from '../../utils/fuelAnalytics';
 import { LorryStatus } from '../../types/lorry';
 import { MapsGpsTab } from '../../components/fleet/profile/MapsGpsTab';
 import { InvoiceTab } from '../../components/fleet/profile/InvoiceTab';
-import { MaintenanceTab } from '../../components/fleet/profile/MaintenanceTab';
 import { ExpensesTab } from '../../components/fleet/profile/ExpensesTab';
 import { DriverTab } from '../../components/fleet/profile/DriverTab';
 import { FuelOverviewSection } from '../../components/diesel/FuelOverviewSection';
@@ -33,6 +32,16 @@ import { FuelCalculatorSection } from '../../components/diesel/FuelCalculatorSec
 import { FuelReceiptsSection } from '../../components/diesel/FuelReceiptsSection';
 import { FuelReceiptScannerSection } from '../../components/diesel/FuelReceiptScannerSection';
 import { PurchasedDieselReportsSection } from '../../components/diesel/PurchasedDieselReportsSection';
+import {
+  MaintenanceDashboardSection,
+  MaintenanceSubKey,
+} from '../../components/maintenance/MaintenanceDashboardSection';
+import { ProblemsRepairsSection } from '../../components/maintenance/ProblemsRepairsSection';
+import { ServicePartsSection } from '../../components/maintenance/ServicePartsSection';
+import { DriverPaymentsSection } from '../../components/maintenance/DriverPaymentsSection';
+import { LoadHandlingSection } from '../../components/maintenance/LoadHandlingSection';
+import { OtherExpensesSection } from '../../components/maintenance/OtherExpensesSection';
+import { MaintenanceCostReportsSection } from '../../components/maintenance/MaintenanceCostReportsSection';
 
 const STATUS_STYLES: Record<LorryStatus, string> = {
   Active: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -57,6 +66,15 @@ const DIESEL_SUBSECTIONS = [
   { key: 'receipts', label: 'Fuel Receipts', icon: FileSpreadsheet },
   { key: 'reports', label: 'Fuel Reports & Analytics', icon: BarChart3 },
 ] as const;
+
+const MAINTENANCE_SUBSECTIONS: { key: MaintenanceSubKey; label: string }[] = [
+  { key: 'problems', label: 'Problems & Repairs' },
+  { key: 'service', label: 'Service & Parts' },
+  { key: 'driver-payments', label: 'Driver Payments' },
+  { key: 'load-handling', label: 'Load & Handling Expenses' },
+  { key: 'other-expenses', label: 'Other Lorry Expenses' },
+  { key: 'cost-reports', label: 'Cost Reports' },
+];
 
 type SectionKey = (typeof PROFILE_SECTIONS)[number]['key'];
 type DieselSubKey = (typeof DIESEL_SUBSECTIONS)[number]['key'] | 'scanner';
@@ -105,19 +123,29 @@ export const LorryProfilePage: React.FC = () => {
         : (DIESEL_SUBSECTIONS.find((d) => d.key === subSection)?.key as DieselSubKey | undefined)
       : undefined;
 
+  const activeMaintenanceSub: MaintenanceSubKey | undefined =
+    activeSection === 'maintenance'
+      ? (MAINTENANCE_SUBSECTIONS.find((m) => m.key === subSection)?.key as
+          | MaintenanceSubKey
+          | undefined)
+      : undefined;
+
   const activeSectionMeta = PROFILE_SECTIONS.find((s) => s.key === activeSection);
   const activeDieselMeta =
     activeDieselSub === 'scanner'
       ? { key: 'scanner', label: 'Smart Fuel Receipt Scanner', icon: ScanLine }
       : DIESEL_SUBSECTIONS.find((d) => d.key === activeDieselSub);
+  const activeMaintenanceMeta = MAINTENANCE_SUBSECTIONS.find((m) => m.key === activeMaintenanceSub);
 
   const backConfig = !lorry
     ? { label: 'Back to Lorry Management', to: '/fleet' }
     : activeDieselSub
       ? { label: 'Back to Diesel Management', to: `/fleet/${lorry.id}/diesel` }
-      : activeSection
-        ? { label: `Back to ${lorry.registrationNumber}`, to: `/fleet/${lorry.id}` }
-        : { label: 'Back to Lorry Management', to: '/fleet' };
+      : activeMaintenanceSub
+        ? { label: 'Back to Maintenance', to: `/fleet/${lorry.id}/maintenance` }
+        : activeSection
+          ? { label: `Back to ${lorry.registrationNumber}`, to: `/fleet/${lorry.id}` }
+          : { label: 'Back to Lorry Management', to: '/fleet' };
 
   const regOf = (id: string) => (lorry && id === lorry.id ? lorry.registrationNumber : id);
 
@@ -357,21 +385,87 @@ export const LorryProfilePage: React.FC = () => {
               </div>
             )}
 
-            {/* Level 2: Other 5 Section Detail Views */}
-            {activeSection && activeSection !== 'diesel' && activeSectionMeta && (
+            {/* Level 2: Maintenance & Lorry Cost Management Dashboard */}
+            {activeSection === 'maintenance' && !activeMaintenanceSub && (
+              <MaintenanceDashboardSection
+                key={lorry.id}
+                lorry={lorry}
+                onOpenSection={(sub) => navigate(`/fleet/${lorry.id}/maintenance/${sub}`)}
+              />
+            )}
+
+            {/* Level 3: Maintenance Sub-Section Detail Views */}
+            {activeSection === 'maintenance' && activeMaintenanceSub && activeMaintenanceMeta && (
               <div className="space-y-4">
-                <div className="flex items-center gap-2.5 border-b border-slate-200 pb-3">
-                  <activeSectionMeta.icon className="h-5 w-5 text-blue-600" />
-                  <h1 className="text-lg font-bold text-slate-900">{activeSectionMeta.label}</h1>
+                <div className="border-b border-slate-200 pb-3 space-y-1">
+                  <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
+                    <button
+                      type="button"
+                      onClick={() => navigate('/fleet')}
+                      className="hover:text-blue-600 font-medium"
+                    >
+                      Lorry Management
+                    </button>
+                    <span>/</span>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/fleet/${lorry.id}`)}
+                      className="font-mono hover:text-blue-600 font-medium"
+                    >
+                      {lorry.registrationNumber}
+                    </button>
+                    <span>/</span>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/fleet/${lorry.id}/maintenance`)}
+                      className="hover:text-blue-600 font-medium"
+                    >
+                      Maintenance Management
+                    </button>
+                  </nav>
+                  <h1 className="text-xl font-bold tracking-tight text-slate-900">
+                    {activeMaintenanceMeta.label}
+                  </h1>
                 </div>
 
-                {activeSection === 'maps' && <MapsGpsTab lorryId={lorry.id} />}
-                {activeSection === 'invoices' && <InvoiceTab lorryId={lorry.id} />}
-                {activeSection === 'maintenance' && <MaintenanceTab lorryId={lorry.id} />}
-                {activeSection === 'expenses' && <ExpensesTab lorryId={lorry.id} />}
-                {activeSection === 'driver' && <DriverTab lorry={lorry} />}
+                {activeMaintenanceSub === 'problems' && (
+                  <ProblemsRepairsSection key={lorry.id} lorry={lorry} />
+                )}
+                {activeMaintenanceSub === 'service' && (
+                  <ServicePartsSection key={lorry.id} lorry={lorry} />
+                )}
+                {activeMaintenanceSub === 'driver-payments' && (
+                  <DriverPaymentsSection key={lorry.id} lorry={lorry} />
+                )}
+                {activeMaintenanceSub === 'load-handling' && (
+                  <LoadHandlingSection key={lorry.id} lorry={lorry} />
+                )}
+                {activeMaintenanceSub === 'other-expenses' && (
+                  <OtherExpensesSection key={lorry.id} lorry={lorry} />
+                )}
+                {activeMaintenanceSub === 'cost-reports' && (
+                  <MaintenanceCostReportsSection key={lorry.id} lorry={lorry} />
+                )}
               </div>
             )}
+
+            {/* Level 2: Other 4 Section Detail Views */}
+            {activeSection &&
+              activeSection !== 'diesel' &&
+              activeSection !== 'maintenance' &&
+              activeSectionMeta && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2.5 border-b border-slate-200 pb-3">
+                    <activeSectionMeta.icon className="h-5 w-5 text-blue-600" />
+                    <h1 className="text-lg font-bold text-slate-900">{activeSectionMeta.label}</h1>
+                  </div>
+
+                  {activeSection === 'maps' && <MapsGpsTab lorryId={lorry.id} />}
+                  {activeSection === 'invoices' && <InvoiceTab lorryId={lorry.id} />}
+                  {activeSection === 'expenses' && <ExpensesTab lorryId={lorry.id} />}
+                  {activeSection === 'driver' && <DriverTab lorry={lorry} />}
+                </div>
+              )}
           </div>
         )}
       </main>
