@@ -10,7 +10,9 @@ import {
   FileText,
   Fuel,
   Map,
+  Navigation,
   Receipt,
+  Route,
   ScanLine,
   SearchX,
   Truck,
@@ -26,6 +28,7 @@ import { LorryStatus } from '../../types/lorry';
 import { InvoiceTab } from '../../components/fleet/profile/InvoiceTab';
 import { DriverTab } from '../../components/fleet/profile/DriverTab';
 import { LiveJourneyMonitoring } from '../../components/gps/LiveJourneyMonitoring';
+import { RoutePlannerSection } from '../../components/gps/RoutePlannerSection';
 import { LorryExpenseDashboard } from '../../components/expenses/LorryExpenseDashboard';
 import { LorryExpenseReports } from '../../components/expenses/LorryExpenseReports';
 import { TripFinancialStatementView } from '../../components/expenses/TripFinancialStatementView';
@@ -80,8 +83,14 @@ const MAINTENANCE_SUBSECTIONS: { key: MaintenanceSubKey; label: string }[] = [
   { key: 'cost-reports', label: 'Cost Reports' },
 ];
 
+const MAPS_SUBSECTIONS = [
+  { key: 'route-planner', label: 'Plan a Route', icon: Route },
+  { key: 'live', label: 'Live Journey Monitoring', icon: Navigation },
+] as const;
+
 type SectionKey = (typeof PROFILE_SECTIONS)[number]['key'];
 type DieselSubKey = (typeof DIESEL_SUBSECTIONS)[number]['key'] | 'scanner';
+type MapsSubKey = (typeof MAPS_SUBSECTIONS)[number]['key'];
 
 const MenuCard: React.FC<{
   label: string;
@@ -147,7 +156,13 @@ export const LorryProfilePage: React.FC = () => {
     return buildTripFinancialStatement(lorry.id, trip);
   }, [lorry, activeExpensesTripId]);
 
+  const activeMapsSub: MapsSubKey | undefined =
+    activeSection === 'maps'
+      ? (MAPS_SUBSECTIONS.find((m) => m.key === subSection)?.key as MapsSubKey | undefined)
+      : undefined;
+
   const activeSectionMeta = PROFILE_SECTIONS.find((s) => s.key === activeSection);
+  const activeMapsMeta = MAPS_SUBSECTIONS.find((m) => m.key === activeMapsSub);
   const activeDieselMeta =
     activeDieselSub === 'scanner'
       ? { key: 'scanner', label: 'Smart Fuel Receipt Scanner', icon: ScanLine }
@@ -156,15 +171,17 @@ export const LorryProfilePage: React.FC = () => {
 
   const backConfig = !lorry
     ? { label: 'Back to Lorry Management', to: '/fleet' }
-    : activeDieselSub
-      ? { label: 'Back to Diesel Management', to: `/fleet/${lorry.id}/diesel` }
-      : activeMaintenanceSub
-        ? { label: 'Back to Maintenance', to: `/fleet/${lorry.id}/maintenance` }
-        : activeExpensesReports || activeExpensesTripId
-          ? { label: 'Back to Expenses', to: `/fleet/${lorry.id}/expenses` }
-          : activeSection
-            ? { label: `Back to ${lorry.registrationNumber}`, to: `/fleet/${lorry.id}` }
-            : { label: 'Back to Lorry Management', to: '/fleet' };
+    : activeMapsSub
+      ? { label: 'Back to Maps & GPS', to: `/fleet/${lorry.id}/maps` }
+      : activeDieselSub
+        ? { label: 'Back to Diesel Management', to: `/fleet/${lorry.id}/diesel` }
+        : activeMaintenanceSub
+          ? { label: 'Back to Maintenance', to: `/fleet/${lorry.id}/maintenance` }
+          : activeExpensesReports || activeExpensesTripId
+            ? { label: 'Back to Expenses', to: `/fleet/${lorry.id}/expenses` }
+            : activeSection
+              ? { label: `Back to ${lorry.registrationNumber}`, to: `/fleet/${lorry.id}` }
+              : { label: 'Back to Lorry Management', to: '/fleet' };
 
   const regOf = (id: string) => (lorry && id === lorry.id ? lorry.registrationNumber : id);
 
@@ -539,8 +556,68 @@ export const LorryProfilePage: React.FC = () => {
               </div>
             )}
 
-            {/* Level 2: Other 3 Section Detail Views */}
+            {/* Level 2 & 3: Maps & GPS Tracking (Plan a Route + Live Journey Monitoring) */}
+            {activeSection === 'maps' && !activeMapsSub && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2.5">
+                  <Map className="h-5 w-5 text-blue-600" />
+                  <h1 className="text-lg font-bold text-slate-900">Maps &amp; GPS Tracking</h1>
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+                  {MAPS_SUBSECTIONS.map(({ key, label, icon }) => (
+                    <MenuCard
+                      key={key}
+                      label={label}
+                      icon={icon}
+                      onClick={() => navigate(`/fleet/${lorry.id}/maps/${key}`)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeSection === 'maps' && activeMapsSub && activeMapsMeta && (
+              <div className="space-y-4">
+                <div className="border-b border-slate-200 pb-3 space-y-1">
+                  <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
+                    <button
+                      type="button"
+                      onClick={() => navigate('/fleet')}
+                      className="hover:text-blue-600 font-medium"
+                    >
+                      Lorry Management
+                    </button>
+                    <span>/</span>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/fleet/${lorry.id}`)}
+                      className="font-mono hover:text-blue-600 font-medium"
+                    >
+                      {lorry.registrationNumber}
+                    </button>
+                    <span>/</span>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/fleet/${lorry.id}/maps`)}
+                      className="hover:text-blue-600 font-medium"
+                    >
+                      Maps &amp; GPS Tracking
+                    </button>
+                  </nav>
+                </div>
+
+                {activeMapsSub === 'route-planner' && (
+                  <RoutePlannerSection key={lorry.id} lorry={lorry} />
+                )}
+                {activeMapsSub === 'live' && (
+                  <LiveJourneyMonitoring key={lorry.id} lorry={lorry} />
+                )}
+              </div>
+            )}
+
+            {/* Level 2: Other 2 Section Detail Views */}
             {activeSection &&
+              activeSection !== 'maps' &&
               activeSection !== 'diesel' &&
               activeSection !== 'maintenance' &&
               activeSection !== 'expenses' &&
@@ -551,7 +628,6 @@ export const LorryProfilePage: React.FC = () => {
                     <h1 className="text-lg font-bold text-slate-900">{activeSectionMeta.label}</h1>
                   </div>
 
-                  {activeSection === 'maps' && <LiveJourneyMonitoring key={lorry.id} lorry={lorry} />}
                   {activeSection === 'invoices' && <InvoiceTab lorryId={lorry.id} />}
                   {activeSection === 'driver' && <DriverTab lorry={lorry} />}
                 </div>

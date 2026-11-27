@@ -89,12 +89,31 @@ export async function fetchRoadRoute(
   waypoints: RouteLocation[],
   signal?: AbortSignal
 ): Promise<RoutedPathResult> {
+  const routes = await fetchRoadRouteAlternatives(waypoints, signal);
+  return routes[0];
+}
+
+/**
+ * Calculate actual road route(s) including alternatives (when supported by OSRM)
+ * across ordered waypoints. Never fabricates or falls back to straight-line distance.
+ */
+export async function fetchRoadRouteAlternatives(
+  waypoints: RouteLocation[],
+  signal?: AbortSignal
+): Promise<RoutedPathResult[]> {
   if (waypoints.length < 2) {
     throw new Error('At least a starting location and final destination are required.');
   }
 
+  for (const w of waypoints) {
+    if (!Number.isFinite(w.lat) || !Number.isFinite(w.lng)) {
+      throw new Error(`Invalid coordinates for location "${w.shortName}". Please re-select it.`);
+    }
+  }
+
   const coordString = waypoints.map((w) => `${w.lng},${w.lat}`).join(';');
-  const url = `https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson`;
+  const alternativesParam = waypoints.length === 2 ? '&alternatives=true' : '&alternatives=false';
+  const url = `https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson${alternativesParam}`;
 
   const res = await fetch(url, { signal });
   if (!res.ok) {
@@ -106,21 +125,25 @@ export async function fetchRoadRoute(
     throw new Error(data.message || 'No drivable road route was found between the selected locations.');
   }
 
-  const route = data.routes[0];
-  const coordinates: Array<[number, number]> = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-  const legs = route.legs.map((leg, i) => ({
-    from: waypoints[i]?.shortName ?? `Stop ${i + 1}`,
-    to: waypoints[i + 1]?.shortName ?? `Stop ${i + 2}`,
-    distanceKm: Math.round((leg.distance / 1000) * 10) / 10,
-    durationSeconds: leg.duration,
-  }));
+  return data.routes.map((route) => {
+    const coordinates: Array<[number, number]> = route.geometry.coordinates.map(([lng, lat]) => [
+      lat,
+      lng,
+    ]);
+    const legs = route.legs.map((leg, i) => ({
+      from: waypoints[i]?.shortName ?? `Stop ${i + 1}`,
+      to: waypoints[i + 1]?.shortName ?? `Stop ${i + 2}`,
+      distanceKm: Math.round((leg.distance / 1000) * 10) / 10,
+      durationSeconds: leg.duration,
+    }));
 
-  return {
-    distanceKm: Math.round((route.distance / 1000) * 10) / 10,
-    durationSeconds: route.duration,
-    coordinates,
-    legs,
-  };
+    return {
+      distanceKm: Math.round((route.distance / 1000) * 10) / 10,
+      durationSeconds: route.duration,
+      coordinates,
+      legs,
+    };
+  });
 }
 
 export function formatDuration(seconds: number): string {
