@@ -11,6 +11,7 @@ import {
   Fuel,
   Map,
   Receipt,
+  ScanLine,
   SearchX,
   Truck,
   UserRound,
@@ -30,6 +31,7 @@ import { DriverTab } from '../../components/fleet/profile/DriverTab';
 import { FuelOverviewSection } from '../../components/diesel/FuelOverviewSection';
 import { FuelCalculatorSection } from '../../components/diesel/FuelCalculatorSection';
 import { FuelReceiptsSection } from '../../components/diesel/FuelReceiptsSection';
+import { FuelReceiptScannerSection } from '../../components/diesel/FuelReceiptScannerSection';
 import { TripDieselAnalyticsSection } from '../../components/diesel/TripDieselAnalyticsSection';
 
 const STATUS_STYLES: Record<LorryStatus, string> = {
@@ -57,7 +59,7 @@ const DIESEL_SUBSECTIONS = [
 ] as const;
 
 type SectionKey = (typeof PROFILE_SECTIONS)[number]['key'];
-type DieselSubKey = (typeof DIESEL_SUBSECTIONS)[number]['key'];
+type DieselSubKey = (typeof DIESEL_SUBSECTIONS)[number]['key'] | 'scanner';
 
 const MenuCard: React.FC<{
   label: string;
@@ -96,13 +98,18 @@ export const LorryProfilePage: React.FC = () => {
   );
 
   const activeSection = PROFILE_SECTIONS.find((s) => s.key === section)?.key as SectionKey | undefined;
-  const activeDieselSub =
+  const activeDieselSub: DieselSubKey | undefined =
     activeSection === 'diesel'
-      ? (DIESEL_SUBSECTIONS.find((d) => d.key === subSection)?.key as DieselSubKey | undefined)
+      ? subSection === 'scanner'
+        ? 'scanner'
+        : (DIESEL_SUBSECTIONS.find((d) => d.key === subSection)?.key as DieselSubKey | undefined)
       : undefined;
 
   const activeSectionMeta = PROFILE_SECTIONS.find((s) => s.key === activeSection);
-  const activeDieselMeta = DIESEL_SUBSECTIONS.find((d) => d.key === activeDieselSub);
+  const activeDieselMeta =
+    activeDieselSub === 'scanner'
+      ? { key: 'scanner', label: 'Smart Fuel Receipt Scanner', icon: ScanLine }
+      : DIESEL_SUBSECTIONS.find((d) => d.key === activeDieselSub);
 
   const backConfig = !lorry
     ? { label: 'Back to Lorry Management', to: '/fleet' }
@@ -228,12 +235,24 @@ export const LorryProfilePage: React.FC = () => {
               </div>
             )}
 
-            {/* Level 2: Diesel Management 4-Card Submenu */}
+            {/* Level 2: Diesel Management 4-Card Submenu + Prominent Scan Fuel Receipt Button */}
             {activeSection === 'diesel' && !activeDieselSub && (
               <div className="space-y-4">
-                <div className="flex items-center gap-2.5">
-                  <Droplets className="h-5 w-5 text-blue-600" />
-                  <h1 className="text-lg font-bold text-slate-900">Diesel Management</h1>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <Droplets className="h-5 w-5 text-blue-600" />
+                    <h1 className="text-lg font-bold text-slate-900">Diesel Management</h1>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="md"
+                    leftIcon={<ScanLine className="h-4 w-4" />}
+                    onClick={() => navigate(`/fleet/${lorry.id}/diesel/scanner`)}
+                    className="min-h-[44px] w-full sm:w-auto"
+                  >
+                    Scan Fuel Receipt
+                  </Button>
                 </div>
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   {DIESEL_SUBSECTIONS.map(({ key, label, icon }) => (
@@ -251,7 +270,7 @@ export const LorryProfilePage: React.FC = () => {
             {/* Level 3: Diesel Sub-Section Detail Views */}
             {activeSection === 'diesel' && activeDieselSub && activeDieselMeta && (
               <div className="space-y-4">
-                {activeDieselSub === 'calculator' || activeDieselSub === 'reports' ? (
+                {activeDieselSub === 'calculator' || activeDieselSub === 'reports' || activeDieselSub === 'scanner' ? (
                   <div className="border-b border-slate-200 pb-4 space-y-1.5">
                     <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
                       <button
@@ -279,12 +298,18 @@ export const LorryProfilePage: React.FC = () => {
                       </button>
                     </nav>
                     <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-                      {activeDieselSub === 'calculator' ? 'Fuel Calculator' : 'Trip-wise Diesel Cost'}
+                      {activeDieselSub === 'calculator'
+                        ? 'Fuel Calculator'
+                        : activeDieselSub === 'reports'
+                          ? 'Trip-wise Diesel Cost'
+                          : 'Smart Fuel Receipt Scanner'}
                     </h1>
                     <p className="text-xs text-slate-500">
                       {activeDieselSub === 'calculator'
                         ? "Plan your truck's fuel requirements and trip expenses."
-                        : 'Track diesel expenses based on trips completed by your lorry.'}
+                        : activeDieselSub === 'reports'
+                          ? 'Track diesel expenses based on trips completed by your lorry.'
+                          : 'Capture or upload a diesel receipt, verify OCR-extracted fields, and confirm payment status.'}
                     </p>
                   </div>
                 ) : (
@@ -309,7 +334,18 @@ export const LorryProfilePage: React.FC = () => {
                   />
                 )}
                 {activeDieselSub === 'receipts' && (
-                  <FuelReceiptsSection entries={lorryFuelEntries} regOf={regOf} />
+                  <FuelReceiptsSection
+                    key={lorry.id}
+                    lorry={lorry}
+                    onOpenScanner={() => navigate(`/fleet/${lorry.id}/diesel/scanner`)}
+                  />
+                )}
+                {activeDieselSub === 'scanner' && (
+                  <FuelReceiptScannerSection
+                    key={lorry.id}
+                    lorry={lorry}
+                    onSaved={(targetLorryId) => navigate(`/fleet/${targetLorryId}/diesel/receipts`)}
+                  />
                 )}
                 {activeDieselSub === 'reports' && (
                   <TripDieselAnalyticsSection key={lorry.id} lorry={lorry} />
