@@ -43,24 +43,38 @@ const SEEDS: Seed[] = [
 const d = (iso: string) => `${iso}T09:00:00.000Z`;
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-export const MOCK_INVOICES: LorryInvoice[] = SEEDS.flatMap((s) =>
-  ['2026-11-02', '2026-11-12', '2026-11-20'].map((date, i) => {
-    const amount = s.baseAmount + i * 3500;
-    const due = new Date(date);
+import { DEMO_TRIPS } from './tripService';
+
+export const MOCK_INVOICES: LorryInvoice[] = SEEDS.flatMap((s) => {
+  const lorryTrips = DEMO_TRIPS.filter((t) => t.lorryId === s.lorryId);
+  // Link demo invoices directly to actual Trip IDs (leave last trip un-invoiced on LR-001 to exercise incomplete P&L)
+  return lorryTrips.slice(0, 4).map((trip, i) => {
+    // Make one trip on LR-001 (index 2: TRP-2026-092) intentionally low-freight to demonstrate Loss-making trip P&L
+    const isLossDemoTrip = s.lorryId === 'LR-001' && i === 2;
+    const baseFreight = isLossDemoTrip ? 14500 : s.baseAmount + i * 6500;
+    const additionalCharges = i === 0 ? 3500 : 0;
+    const status = s.statuses[i % s.statuses.length];
+    const totalInv = baseFreight + additionalCharges;
+    const amountReceived =
+      status === 'Paid' ? totalInv : i === 0 ? Math.round(totalInv * 0.6) : 0;
+    const due = new Date(trip.completionDate);
     due.setDate(due.getDate() + 15);
+
     return {
       id: `${s.lorryId}-INV-${i + 1}`,
       lorryId: s.lorryId,
       invoiceNo: `FOS/26-27/${s.prefix}/${String(101 + i)}`,
-      date: d(date),
+      date: d(trip.completionDate),
       dueDate: d(due.toISOString().slice(0, 10)),
       client: s.client,
-      tripRef: `TRP-${s.from.slice(0, 3).toUpperCase()}-${s.to.slice(0, 3).toUpperCase()}-${810 + i}`,
-      amount,
-      status: s.statuses[i],
+      tripRef: trip.id,
+      amount: baseFreight,
+      additionalCharges,
+      amountReceived,
+      status,
     };
-  })
-);
+  });
+});
 
 export const MOCK_DIESEL: LorryDieselRecord[] = SEEDS.flatMap((s) =>
   ['2026-11-04', '2026-11-11', '2026-11-18', '2026-11-25'].map((date, i) => {

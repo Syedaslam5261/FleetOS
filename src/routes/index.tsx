@@ -86,6 +86,10 @@ export const router = createBrowserRouter(
       element: <ExpensesPage />,
     },
     {
+      path: '/expenses/:lorryId/trips/:tripId',
+      element: <ExpensesPage />,
+    },
+    {
       path: '/fleet/:lorryId',
       element: <LorryProfilePage />,
     },

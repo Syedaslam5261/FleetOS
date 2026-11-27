@@ -7,8 +7,11 @@ import { FuelReceiptService } from '../../services/fuelReceiptService';
 import { MaintenanceService } from '../../services/maintenanceService';
 import { LorryStatus } from '../../types/lorry';
 import { getLorryExpenseItems, summarizeExpenseItems } from '../../utils/expensesAggregation';
+import { buildTripFinancialStatement } from '../../utils/tripProfitLoss';
+import { TripService } from '../../services/tripService';
 import { LorryExpenseDashboard } from '../../components/expenses/LorryExpenseDashboard';
 import { LorryExpenseReports } from '../../components/expenses/LorryExpenseReports';
+import { TripFinancialStatementView } from '../../components/expenses/TripFinancialStatementView';
 import { Button } from '../../components/common/Button';
 import { formatINR } from '../../utils/formatters';
 
@@ -21,12 +24,12 @@ const STATUS_STYLES: Record<LorryStatus, string> = {
 };
 
 export const ExpensesPage: React.FC = () => {
-  const { lorryId } = useParams<{ lorryId?: string }>();
+  const { lorryId, tripId } = useParams<{ lorryId?: string; tripId?: string }>();
   const location = useLocation();
   const navigate = useNavigate();
   const [tick, setTick] = useState(0);
 
-  const isReportsView = Boolean(lorryId && location.pathname.endsWith('/reports'));
+  const isReportsView = Boolean(lorryId && !tripId && location.pathname.endsWith('/reports'));
 
   useEffect(() => {
     const u1 = LorryService.subscribe(() => setTick((t) => t + 1));
@@ -55,10 +58,17 @@ export const ExpensesPage: React.FC = () => {
     [lorries, tick]
   );
 
+  const selectedTripStatement = useMemo(() => {
+    if (!selectedLorry || !tripId) return null;
+    const trip = TripService.getByLorryId(selectedLorry.id).find((t) => t.id === tripId);
+    if (!trip) return null;
+    return buildTripFinancialStatement(selectedLorry.id, trip);
+  }, [selectedLorry, tripId, tick]);
+
   const backConfig = !lorryId
     ? { label: 'Back to Lorry Management', to: '/fleet' }
-    : isReportsView && selectedLorry
-      ? { label: `Back to ${selectedLorry.registrationNumber} Expenses`, to: `/expenses/${selectedLorry.id}` }
+    : (isReportsView || tripId) && selectedLorry
+      ? { label: `Back to ${selectedLorry.registrationNumber} Financial Dashboard`, to: `/expenses/${selectedLorry.id}` }
       : { label: 'Back to Lorry List', to: '/expenses' };
 
   return (
@@ -210,18 +220,48 @@ export const ExpensesPage: React.FC = () => {
           </div>
         )}
 
-        {/* Level 2: Individual Lorry Expense Dashboard */}
-        {selectedLorry && !isReportsView && (
+        {/* Level 2: Individual Lorry Financial Dashboard */}
+        {selectedLorry && !isReportsView && !tripId && (
           <LorryExpenseDashboard
             key={selectedLorry.id}
             lorry={selectedLorry}
             onOpenReports={() => navigate(`/expenses/${selectedLorry.id}/reports`)}
+            onOpenTrip={(tid) => navigate(`/expenses/${selectedLorry.id}/trips/${tid}`)}
           />
         )}
 
-        {/* Level 3: Individual Lorry Expense History & Reports */}
+        {/* Level 3A: Individual Lorry Financial Reports */}
         {selectedLorry && isReportsView && (
-          <LorryExpenseReports key={selectedLorry.id} lorry={selectedLorry} />
+          <LorryExpenseReports
+            key={selectedLorry.id}
+            lorry={selectedLorry}
+            onOpenTrip={(tid) => navigate(`/expenses/${selectedLorry.id}/trips/${tid}`)}
+          />
+        )}
+
+        {/* Level 3B: Individual Trip Financial Statement */}
+        {selectedLorry && tripId && (
+          selectedTripStatement ? (
+            <TripFinancialStatementView
+              key={tripId}
+              lorry={selectedLorry}
+              statement={selectedTripStatement}
+            />
+          ) : (
+            <div className="mx-auto max-w-md py-16 text-center">
+              <h2 className="text-lg font-bold text-slate-900">Trip not found</h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Trip {tripId} does not belong to {selectedLorry.registrationNumber}.
+              </p>
+              <Button
+                className="mt-4 min-h-[44px]"
+                variant="primary"
+                onClick={() => navigate(`/expenses/${selectedLorry.id}`)}
+              >
+                Back to Financial Dashboard
+              </Button>
+            </div>
+          )
         )}
       </main>
     </div>

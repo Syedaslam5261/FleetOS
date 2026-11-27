@@ -28,6 +28,9 @@ import { InvoiceTab } from '../../components/fleet/profile/InvoiceTab';
 import { DriverTab } from '../../components/fleet/profile/DriverTab';
 import { LorryExpenseDashboard } from '../../components/expenses/LorryExpenseDashboard';
 import { LorryExpenseReports } from '../../components/expenses/LorryExpenseReports';
+import { TripFinancialStatementView } from '../../components/expenses/TripFinancialStatementView';
+import { TripService } from '../../services/tripService';
+import { buildTripFinancialStatement } from '../../utils/tripProfitLoss';
 import { FuelOverviewSection } from '../../components/diesel/FuelOverviewSection';
 import { FuelCalculatorSection } from '../../components/diesel/FuelCalculatorSection';
 import { FuelReceiptsSection } from '../../components/diesel/FuelReceiptsSection';
@@ -133,6 +136,16 @@ export const LorryProfilePage: React.FC = () => {
 
   const activeExpensesReports =
     activeSection === 'expenses' && subSection === 'reports';
+  const activeExpensesTripId =
+    activeSection === 'expenses' && subSection && subSection !== 'reports'
+      ? subSection
+      : undefined;
+  const activeExpensesTripStatement = useMemo(() => {
+    if (!lorry || !activeExpensesTripId) return null;
+    const trip = TripService.getByLorryId(lorry.id).find((t) => t.id === activeExpensesTripId);
+    if (!trip) return null;
+    return buildTripFinancialStatement(lorry.id, trip);
+  }, [lorry, activeExpensesTripId]);
 
   const activeSectionMeta = PROFILE_SECTIONS.find((s) => s.key === activeSection);
   const activeDieselMeta =
@@ -147,7 +160,7 @@ export const LorryProfilePage: React.FC = () => {
       ? { label: 'Back to Diesel Management', to: `/fleet/${lorry.id}/diesel` }
       : activeMaintenanceSub
         ? { label: 'Back to Maintenance', to: `/fleet/${lorry.id}/maintenance` }
-        : activeExpensesReports
+        : activeExpensesReports || activeExpensesTripId
           ? { label: 'Back to Expenses', to: `/fleet/${lorry.id}/expenses` }
           : activeSection
             ? { label: `Back to ${lorry.registrationNumber}`, to: `/fleet/${lorry.id}` }
@@ -455,13 +468,35 @@ export const LorryProfilePage: React.FC = () => {
               </div>
             )}
 
-            {/* Level 2 & 3: Expenses Management (Live Aggregation) */}
-            {activeSection === 'expenses' && !activeExpensesReports && (
+            {/* Level 2 & 3: Expenses Management + Trip-wise P&L */}
+            {activeSection === 'expenses' && !activeExpensesReports && !activeExpensesTripId && (
               <LorryExpenseDashboard
                 key={lorry.id}
                 lorry={lorry}
                 onOpenReports={() => navigate(`/fleet/${lorry.id}/expenses/reports`)}
+                onOpenTrip={(tid) => navigate(`/fleet/${lorry.id}/expenses/${tid}`)}
               />
+            )}
+
+            {activeSection === 'expenses' && activeExpensesTripId && (
+              activeExpensesTripStatement ? (
+                <TripFinancialStatementView
+                  key={activeExpensesTripId}
+                  lorry={lorry}
+                  statement={activeExpensesTripStatement}
+                />
+              ) : (
+                <div className="mx-auto max-w-md py-16 text-center">
+                  <h2 className="text-lg font-bold text-slate-900">Trip not found</h2>
+                  <Button
+                    className="mt-4 min-h-[44px]"
+                    variant="primary"
+                    onClick={() => navigate(`/fleet/${lorry.id}/expenses`)}
+                  >
+                    Back to Expenses
+                  </Button>
+                </div>
+              )
             )}
 
             {activeSection === 'expenses' && activeExpensesReports && (
@@ -493,10 +528,14 @@ export const LorryProfilePage: React.FC = () => {
                     </button>
                   </nav>
                   <h1 className="text-xl font-bold tracking-tight text-slate-900">
-                    Expense History &amp; Reports
+                    Financial Reports &amp; P&amp;L
                   </h1>
                 </div>
-                <LorryExpenseReports key={lorry.id} lorry={lorry} />
+                <LorryExpenseReports
+                  key={lorry.id}
+                  lorry={lorry}
+                  onOpenTrip={(tid) => navigate(`/fleet/${lorry.id}/expenses/${tid}`)}
+                />
               </div>
             )}
 

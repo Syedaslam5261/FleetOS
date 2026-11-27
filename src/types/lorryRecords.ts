@@ -20,7 +20,12 @@ export interface LorryInvoice {
   dueDate: string;
   client: string;
   tripRef: string;
+  /** Agreed freight amount (₹) */
   amount: number;
+  /** Optional recorded additional charges (detention, halting, extra drop) */
+  additionalCharges?: number;
+  /** Explicit customer cash received so far (for partial payments; never inferred for unpaid) */
+  amountReceived?: number;
   status: InvoiceStatus;
 }
 
