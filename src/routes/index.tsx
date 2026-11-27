@@ -4,6 +4,7 @@ import { Layout } from '../components/layout/Layout';
 import { DieselDashboardPage } from '../pages/diesel/DieselDashboard';
 import { LorryManagementPage } from '../pages/fleet/LorryManagementPage';
 import { LorryProfilePage } from '../pages/fleet/LorryProfilePage';
+import { ExpensesPage } from '../pages/expenses/ExpensesPage';
 import { ModulePlaceholder } from '../pages/common/ModulePlaceholder';
 
 const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined;
@@ -49,15 +50,6 @@ export const router = createBrowserRouter(
           ),
         },
         {
-          path: 'expenses',
-          element: (
-            <ModulePlaceholder
-              moduleName="Expenses"
-              moduleDescription="Reconcile FASTag tolls, driver DA/bata allowances, border entry taxes, and transit expenses."
-            />
-          ),
-        },
-        {
           path: 'reports',
           element: (
             <ModulePlaceholder
@@ -80,6 +72,18 @@ export const router = createBrowserRouter(
           element: <Navigate to="/fleet" replace />,
         },
       ],
+    },
+    {
+      path: '/expenses',
+      element: <ExpensesPage />,
+    },
+    {
+      path: '/expenses/:lorryId',
+      element: <ExpensesPage />,
+    },
+    {
+      path: '/expenses/:lorryId/reports',
+      element: <ExpensesPage />,
     },
     {
       path: '/fleet/:lorryId',

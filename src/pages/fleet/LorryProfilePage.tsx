@@ -25,8 +25,9 @@ import { filterEntries } from '../../utils/fuelAnalytics';
 import { LorryStatus } from '../../types/lorry';
 import { MapsGpsTab } from '../../components/fleet/profile/MapsGpsTab';
 import { InvoiceTab } from '../../components/fleet/profile/InvoiceTab';
-import { ExpensesTab } from '../../components/fleet/profile/ExpensesTab';
 import { DriverTab } from '../../components/fleet/profile/DriverTab';
+import { LorryExpenseDashboard } from '../../components/expenses/LorryExpenseDashboard';
+import { LorryExpenseReports } from '../../components/expenses/LorryExpenseReports';
 import { FuelOverviewSection } from '../../components/diesel/FuelOverviewSection';
 import { FuelCalculatorSection } from '../../components/diesel/FuelCalculatorSection';
 import { FuelReceiptsSection } from '../../components/diesel/FuelReceiptsSection';
@@ -130,6 +131,9 @@ export const LorryProfilePage: React.FC = () => {
           | undefined)
       : undefined;
 
+  const activeExpensesReports =
+    activeSection === 'expenses' && subSection === 'reports';
+
   const activeSectionMeta = PROFILE_SECTIONS.find((s) => s.key === activeSection);
   const activeDieselMeta =
     activeDieselSub === 'scanner'
@@ -143,9 +147,11 @@ export const LorryProfilePage: React.FC = () => {
       ? { label: 'Back to Diesel Management', to: `/fleet/${lorry.id}/diesel` }
       : activeMaintenanceSub
         ? { label: 'Back to Maintenance', to: `/fleet/${lorry.id}/maintenance` }
-        : activeSection
-          ? { label: `Back to ${lorry.registrationNumber}`, to: `/fleet/${lorry.id}` }
-          : { label: 'Back to Lorry Management', to: '/fleet' };
+        : activeExpensesReports
+          ? { label: 'Back to Expenses', to: `/fleet/${lorry.id}/expenses` }
+          : activeSection
+            ? { label: `Back to ${lorry.registrationNumber}`, to: `/fleet/${lorry.id}` }
+            : { label: 'Back to Lorry Management', to: '/fleet' };
 
   const regOf = (id: string) => (lorry && id === lorry.id ? lorry.registrationNumber : id);
 
@@ -449,10 +455,56 @@ export const LorryProfilePage: React.FC = () => {
               </div>
             )}
 
-            {/* Level 2: Other 4 Section Detail Views */}
+            {/* Level 2 & 3: Expenses Management (Live Aggregation) */}
+            {activeSection === 'expenses' && !activeExpensesReports && (
+              <LorryExpenseDashboard
+                key={lorry.id}
+                lorry={lorry}
+                onOpenReports={() => navigate(`/fleet/${lorry.id}/expenses/reports`)}
+              />
+            )}
+
+            {activeSection === 'expenses' && activeExpensesReports && (
+              <div className="space-y-4">
+                <div className="border-b border-slate-200 pb-3 space-y-1">
+                  <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
+                    <button
+                      type="button"
+                      onClick={() => navigate('/fleet')}
+                      className="hover:text-blue-600 font-medium"
+                    >
+                      Lorry Management
+                    </button>
+                    <span>/</span>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/fleet/${lorry.id}`)}
+                      className="font-mono hover:text-blue-600 font-medium"
+                    >
+                      {lorry.registrationNumber}
+                    </button>
+                    <span>/</span>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/fleet/${lorry.id}/expenses`)}
+                      className="hover:text-blue-600 font-medium"
+                    >
+                      Expenses Management
+                    </button>
+                  </nav>
+                  <h1 className="text-xl font-bold tracking-tight text-slate-900">
+                    Expense History &amp; Reports
+                  </h1>
+                </div>
+                <LorryExpenseReports key={lorry.id} lorry={lorry} />
+              </div>
+            )}
+
+            {/* Level 2: Other 3 Section Detail Views */}
             {activeSection &&
               activeSection !== 'diesel' &&
               activeSection !== 'maintenance' &&
+              activeSection !== 'expenses' &&
               activeSectionMeta && (
                 <div className="space-y-4">
                   <div className="flex items-center gap-2.5 border-b border-slate-200 pb-3">
@@ -462,7 +514,6 @@ export const LorryProfilePage: React.FC = () => {
 
                   {activeSection === 'maps' && <MapsGpsTab lorryId={lorry.id} />}
                   {activeSection === 'invoices' && <InvoiceTab lorryId={lorry.id} />}
-                  {activeSection === 'expenses' && <ExpensesTab lorryId={lorry.id} />}
                   {activeSection === 'driver' && <DriverTab lorry={lorry} />}
                 </div>
               )}
