@@ -326,9 +326,8 @@ export const PurchasedDieselReportsSection: React.FC<PurchasedDieselReportsSecti
 
   const tripWiseData = useMemo(() => {
     const tripPurchases = activeTrip ? receipts.filter((r) => r.tripId === activeTrip.id) : [];
-    const unassigned = receipts.filter((r) => !r.tripId);
     const summary = summarizePurchases(tripPurchases, activeTrip ? 1 : 0);
-    return { trip: activeTrip, purchases: tripPurchases, unassigned, summary };
+    return { trip: activeTrip, purchases: tripPurchases, summary };
   }, [activeTrip, receipts]);
 
   const weeklyData = useMemo(
@@ -355,9 +354,10 @@ export const PurchasedDieselReportsSection: React.FC<PurchasedDieselReportsSecti
           ? monthlyData.summary
           : yearlyData.summary;
 
+  // Strictly scoped to the selected period (never overall/all-time)
   const activeUnassigned =
     filterMode === 'trip'
-      ? tripWiseData.unassigned
+      ? []
       : filterMode === 'weekly'
         ? weeklyData.unassignedReceipts
         : filterMode === 'monthly'
@@ -366,6 +366,18 @@ export const PurchasedDieselReportsSection: React.FC<PurchasedDieselReportsSecti
 
   const weekBounds = useMemo(() => getWeekBounds(weekAnchor), [weekAnchor]);
   const [monthYr, monthMo] = selectedMonth.split('-');
+
+  const activeScopeLabel = useMemo(() => {
+    if (filterMode === 'trip') return activeTrip ? activeTrip.id : 'Selected trip';
+    if (filterMode === 'weekly') {
+      return `${formatDateOnly(`${weekBounds.start}T00:00:00Z`)} – ${formatDateOnly(`${weekBounds.end}T00:00:00Z`)}`;
+    }
+    if (filterMode === 'monthly') {
+      const mName = MONTHS.find((m) => m.value === monthMo)?.label ?? monthMo;
+      return `${mName} ${monthYr}`;
+    }
+    return `Year ${selectedYear}`;
+  }, [filterMode, activeTrip, weekBounds, monthMo, monthYr, selectedYear]);
 
   return (
     <div className="space-y-6">
@@ -524,7 +536,7 @@ export const PurchasedDieselReportsSection: React.FC<PurchasedDieselReportsSecti
             <Route className="h-4 w-4 text-blue-600" />
           </div>
           <p className="mt-2 font-mono text-2xl font-bold text-slate-900">{activeSummary.tripsCount}</p>
-          <p className="mt-1 text-[11px] text-slate-500">{lorry.registrationNumber}</p>
+          <p className="mt-1 text-[11px] text-slate-500">{activeScopeLabel}</p>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 shadow-sm">
