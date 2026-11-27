@@ -23,9 +23,9 @@ import { LorryService } from '../../services/lorryService';
 import { FUEL_LEDGER } from '../../services/mockFuelLedger';
 import { filterEntries } from '../../utils/fuelAnalytics';
 import { LorryStatus } from '../../types/lorry';
-import { MapsGpsTab } from '../../components/fleet/profile/MapsGpsTab';
 import { InvoiceTab } from '../../components/fleet/profile/InvoiceTab';
 import { DriverTab } from '../../components/fleet/profile/DriverTab';
+import { LiveJourneyMonitoring } from '../../components/gps/LiveJourneyMonitoring';
 import { LorryExpenseDashboard } from '../../components/expenses/LorryExpenseDashboard';
 import { LorryExpenseReports } from '../../components/expenses/LorryExpenseReports';
 import { TripFinancialStatementView } from '../../components/expenses/TripFinancialStatementView';
@@ -551,7 +551,7 @@ export const LorryProfilePage: React.FC = () => {
                     <h1 className="text-lg font-bold text-slate-900">{activeSectionMeta.label}</h1>
                   </div>
 
-                  {activeSection === 'maps' && <MapsGpsTab lorryId={lorry.id} />}
+                  {activeSection === 'maps' && <LiveJourneyMonitoring key={lorry.id} lorry={lorry} />}
                   {activeSection === 'invoices' && <InvoiceTab lorryId={lorry.id} />}
                   {activeSection === 'driver' && <DriverTab lorry={lorry} />}
                 </div>

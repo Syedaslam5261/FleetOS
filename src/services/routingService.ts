@@ -131,3 +131,42 @@ export function formatDuration(seconds: number): string {
   if (hours === 0) return `${mins} min`;
   return mins === 0 ? `${hours} hr` : `${hours} hr ${mins} min`;
 }
+
+const reverseGeocodeCache = new Map<string, string>();
+
+/**
+ * Reverse geocode verified GPS coordinates into a human-readable area/address
+ * using OpenStreetMap Nominatim. Results are cached by ~100m grid key to respect rate limits.
+ */
+export async function reverseGeocodeLocation(
+  lat: number,
+  lng: number,
+  signal?: AbortSignal
+): Promise<string> {
+  const cacheKey = `${lat.toFixed(3)},${lng.toFixed(3)}`;
+  const cached = reverseGeocodeCache.get(cacheKey);
+  if (cached) return cached;
+
+  const params = new URLSearchParams({
+    lat: String(lat),
+    lon: String(lng),
+    format: 'json',
+    addressdetails: '1',
+    zoom: '14',
+  });
+
+  const res = await fetch(`https://nominatim.openstreetmap.org/reverse?${params.toString()}`, {
+    signal,
+    headers: { Accept: 'application/json' },
+  });
+  if (!res.ok) {
+    throw new Error(`Reverse geocoding failed (HTTP ${res.status})`);
+  }
+
+  const data = (await res.json()) as NominatimResult;
+  const label = data.display_name
+    ? shortLabelFromNominatim(data)
+    : `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  reverseGeocodeCache.set(cacheKey, label);
+  return label;
+}
