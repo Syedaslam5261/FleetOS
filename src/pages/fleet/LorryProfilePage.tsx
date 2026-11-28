@@ -21,8 +21,6 @@ import { clsx } from 'clsx';
 import { Button } from '../../components/common/Button';
 import { FleetOSLogo, SECTION_ICON_SYSTEM } from '../../components/common/FleetOSBrand';
 import { LorryService } from '../../services/lorryService';
-import { FUEL_LEDGER } from '../../services/mockFuelLedger';
-import { filterEntries } from '../../utils/fuelAnalytics';
 import { LorryStatus } from '../../types/lorry';
 import { InvoiceTab } from '../../components/fleet/profile/InvoiceTab';
 import { DriverTab } from '../../components/fleet/profile/DriverTab';
@@ -36,7 +34,6 @@ import { LorryExpenseReports } from '../../components/expenses/LorryExpenseRepor
 import { TripFinancialStatementView } from '../../components/expenses/TripFinancialStatementView';
 import { TripService } from '../../services/tripService';
 import { buildTripFinancialStatement } from '../../utils/tripProfitLoss';
-import { FuelOverviewSection } from '../../components/diesel/FuelOverviewSection';
 import { FuelCalculatorSection } from '../../components/diesel/FuelCalculatorSection';
 import { FuelReceiptsSection } from '../../components/diesel/FuelReceiptsSection';
 import { FuelReceiptScannerSection } from '../../components/diesel/FuelReceiptScannerSection';
@@ -70,10 +67,10 @@ const PROFILE_SECTIONS = [
 ] as const;
 
 const DIESEL_SUBSECTIONS = [
-  { key: 'overview', label: 'Fuel Overview', icon: Fuel },
-  { key: 'calculator', label: 'Fuel Calculator', icon: Calculator },
-  { key: 'receipts', label: 'Fuel Receipts', icon: FileSpreadsheet },
-  { key: 'reports', label: 'Fuel Reports & Analytics', icon: BarChart3 },
+  { key: 'calculator', label: 'Diesel Calculator', icon: Calculator },
+  { key: 'scanner', label: 'Receipt Scanner', icon: ScanLine },
+  { key: 'reports', label: 'Diesel Reports', icon: BarChart3 },
+  { key: 'receipts', label: 'Diesel History', icon: FileSpreadsheet },
 ] as const;
 
 const MAINTENANCE_SUBSECTIONS: { key: MaintenanceSubKey | 'documents'; label: string }[] = [
@@ -132,17 +129,11 @@ export const LorryProfilePage: React.FC = () => {
   } | null;
 
   const lorry = useMemo(() => LorryService.getLorryById(lorryId), [lorryId]);
-  const lorryFuelEntries = useMemo(
-    () => (lorry ? filterEntries(FUEL_LEDGER, lorry.id) : []),
-    [lorry]
-  );
 
   const activeSection = PROFILE_SECTIONS.find((s) => s.key === section)?.key as SectionKey | undefined;
   const activeDieselSub: DieselSubKey | undefined =
     activeSection === 'diesel'
-      ? subSection === 'scanner'
-        ? 'scanner'
-        : (DIESEL_SUBSECTIONS.find((d) => d.key === subSection)?.key as DieselSubKey | undefined)
+      ? (DIESEL_SUBSECTIONS.find((d) => d.key === subSection)?.key as DieselSubKey | undefined)
       : undefined;
 
   const activeMaintenanceSub: (MaintenanceSubKey | 'documents') | undefined =
@@ -422,39 +413,40 @@ export const LorryProfilePage: React.FC = () => {
                   </div>
                 )}
 
-                {activeDieselSub === 'overview' && (
-                  <FuelOverviewSection
-                    entries={lorryFuelEntries}
-                    regOf={regOf}
-                    scopeLabel={lorry.registrationNumber}
-                  />
-                )}
                 {activeDieselSub === 'calculator' && (
-                  <FuelCalculatorSection
-                    key={lorry.id}
-                    lorry={lorry}
-                    lorryFuelEntries={lorryFuelEntries}
-                  />
+                  <FuelCalculatorSection key={lorry.id} lorry={lorry} />
                 )}
                 {activeDieselSub === 'receipts' && (
                   <FuelReceiptsSection
                     key={lorry.id}
                     lorry={lorry}
-                    onOpenScanner={() => navigate(`/fleet/${lorry.id}/diesel/scanner`)}
+                    onOpenScanner={() =>
+                      navigate(`/fleet/${lorry.id}/diesel/scanner`, {
+                        state: navState ?? { returnSheet: 'diesel' },
+                      })
+                    }
                   />
                 )}
                 {activeDieselSub === 'scanner' && (
                   <FuelReceiptScannerSection
                     key={lorry.id}
                     lorry={lorry}
-                    onSaved={(targetLorryId) => navigate(`/fleet/${targetLorryId}/diesel/receipts`)}
+                    onSaved={(targetLorryId) =>
+                      navigate(`/fleet/${targetLorryId}/diesel/receipts`, {
+                        state: { returnSheet: 'diesel' },
+                      })
+                    }
                   />
                 )}
                 {activeDieselSub === 'reports' && (
                   <PurchasedDieselReportsSection
                     key={lorry.id}
                     lorry={lorry}
-                    onSwitchLorry={(nextId) => navigate(`/fleet/${nextId}/diesel/reports`)}
+                    onSwitchLorry={(nextId) =>
+                      navigate(`/fleet/${nextId}/diesel/reports`, {
+                        state: { returnSheet: 'diesel' },
+                      })
+                    }
                   />
                 )}
               </div>

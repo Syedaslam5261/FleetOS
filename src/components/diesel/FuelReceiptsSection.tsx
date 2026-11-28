@@ -1,12 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   CheckCircle2,
+  Edit3,
   Eye,
   ScanLine,
   Search,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button } from '../common/Button';
+import { Modal } from '../common/Modal';
 import { FuelReceiptDetailModal } from './FuelReceiptDetailModal';
 import { ProfileEmptyState } from '../fleet/profile/ProfileParts';
 import { Lorry } from '../../types/lorry';
@@ -38,6 +40,47 @@ export const FuelReceiptsSection: React.FC<FuelReceiptsSectionProps> = ({
   const [selectedReceipt, setSelectedReceipt] = useState<FuelReceiptRecord | null>(null);
   const [openMarkPaid, setOpenMarkPaid] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+
+  // Edit receipt modal state
+  const [editingReceipt, setEditingReceipt] = useState<FuelReceiptRecord | null>(null);
+  const [editStation, setEditStation] = useState('');
+  const [editReceiptNo, setEditReceiptNo] = useState('');
+  const [editDate, setEditDate] = useState('');
+  const [editLitres, setEditLitres] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [editTotal, setEditTotal] = useState('');
+  const [editError, setEditError] = useState<string | null>(null);
+
+  const openEditModal = (r: FuelReceiptRecord) => {
+    setEditingReceipt(r);
+    setEditStation(r.fuelStation);
+    setEditReceiptNo(r.receiptNumber);
+    setEditDate(r.receiptDate);
+    setEditLitres(String(r.dieselLitres));
+    setEditPrice(String(r.pricePerLitre));
+    setEditTotal(String(r.totalAmount));
+    setEditError(null);
+  };
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingReceipt) return;
+    try {
+      const updated = FuelReceiptService.updateReceipt(editingReceipt.id, {
+        fuelStation: editStation,
+        receiptNumber: editReceiptNo,
+        receiptDate: editDate,
+        dieselLitres: Number(editLitres),
+        pricePerLitre: Number(editPrice),
+        totalAmount: Number(editTotal),
+      });
+      setEditingReceipt(null);
+      setNotice(`Updated diesel receipt ${updated.receiptNumber}.`);
+      window.setTimeout(() => setNotice(null), 4000);
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : 'Unable to update receipt.');
+    }
+  };
 
   useEffect(() => {
     setReceipts(FuelReceiptService.getByLorryId(lorry.id));
@@ -232,7 +275,14 @@ export const FuelReceiptsSection: React.FC<FuelReceiptsSectionProps> = ({
                     }}
                     className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-lg bg-blue-50 px-3 text-xs font-semibold text-blue-700 hover:bg-blue-100"
                   >
-                    <Eye className="h-4 w-4" /> View Receipt
+                    <Eye className="h-4 w-4" /> View
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openEditModal(r)}
+                    className="flex min-h-[44px] items-center justify-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                  >
+                    <Edit3 className="h-3.5 w-3.5" /> Edit
                   </button>
                   {r.paymentStatus === 'UNPAID' && (
                     <button
@@ -306,6 +356,13 @@ export const FuelReceiptsSection: React.FC<FuelReceiptsSectionProps> = ({
                           >
                             <Eye className="h-3.5 w-3.5" /> View
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(r)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                          >
+                            <Edit3 className="h-3.5 w-3.5" /> Edit
+                          </button>
                           {r.paymentStatus === 'UNPAID' && (
                             <button
                               type="button"
@@ -343,6 +400,115 @@ export const FuelReceiptsSection: React.FC<FuelReceiptsSectionProps> = ({
         }}
         onMarkedPaid={handleMarkedPaid}
       />
+
+      {/* Edit Diesel Purchase Modal */}
+      <Modal
+        isOpen={!!editingReceipt}
+        onClose={() => setEditingReceipt(null)}
+        title="Edit Diesel Purchase"
+        subtitle={editingReceipt ? `${editingReceipt.receiptNumber} · ${lorry.registrationNumber}` : ''}
+        maxWidth="md"
+      >
+        <form onSubmit={handleSaveEdit} className="space-y-3.5">
+          {editError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+              {editError}
+            </div>
+          )}
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-slate-700">Fuel Station</label>
+            <input
+              type="text"
+              required
+              value={editStation}
+              onChange={(e) => setEditStation(e.target.value)}
+              className="min-h-[44px] w-full rounded-lg border border-slate-300 px-3 text-sm"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-slate-700">Receipt No.</label>
+              <input
+                type="text"
+                required
+                value={editReceiptNo}
+                onChange={(e) => setEditReceiptNo(e.target.value)}
+                className="min-h-[44px] w-full rounded-lg border border-slate-300 px-3 font-mono text-sm"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-slate-700">Date</label>
+              <input
+                type="date"
+                required
+                value={editDate}
+                onChange={(e) => setEditDate(e.target.value)}
+                className="min-h-[44px] w-full rounded-lg border border-slate-300 px-3 text-sm"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2.5">
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-slate-700">Litres</label>
+              <input
+                type="number"
+                required
+                min="0.1"
+                step="0.01"
+                value={editLitres}
+                onChange={(e) => {
+                  setEditLitres(e.target.value);
+                  const l = Number(e.target.value);
+                  const p = Number(editPrice);
+                  if (Number.isFinite(l) && Number.isFinite(p) && l > 0 && p > 0) {
+                    setEditTotal((l * p).toFixed(2));
+                  }
+                }}
+                className="min-h-[44px] w-full rounded-lg border border-slate-300 px-2.5 text-sm"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-slate-700">Price / L (₹)</label>
+              <input
+                type="number"
+                required
+                min="0.1"
+                step="0.01"
+                value={editPrice}
+                onChange={(e) => {
+                  setEditPrice(e.target.value);
+                  const l = Number(editLitres);
+                  const p = Number(e.target.value);
+                  if (Number.isFinite(l) && Number.isFinite(p) && l > 0 && p > 0) {
+                    setEditTotal((l * p).toFixed(2));
+                  }
+                }}
+                className="min-h-[44px] w-full rounded-lg border border-slate-300 px-2.5 text-sm"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-slate-700">Total (₹)</label>
+              <input
+                type="number"
+                required
+                min="0.1"
+                step="0.01"
+                value={editTotal}
+                onChange={(e) => setEditTotal(e.target.value)}
+                className="min-h-[44px] w-full rounded-lg border border-slate-300 px-2.5 text-sm font-bold"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="secondary" onClick={() => setEditingReceipt(null)} className="min-h-[44px]">
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" className="min-h-[44px]">
+              Save Changes
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

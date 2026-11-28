@@ -499,6 +499,63 @@ class FuelReceiptServiceClass {
     this.notify();
     return updated;
   }
+
+  updateReceipt(
+    receiptId: string,
+    updates: {
+      fuelStation: string;
+      receiptNumber: string;
+      receiptDate: string;
+      dieselLitres: number;
+      pricePerLitre: number;
+      totalAmount: number;
+    }
+  ): FuelReceiptRecord {
+    const idx = this.receipts.findIndex((r) => r.id === receiptId);
+    if (idx === -1) throw new Error('Receipt not found.');
+
+    const existing = this.receipts[idx];
+    const cleanNo = normalizeReceiptNo(updates.receiptNumber);
+    if (!updates.fuelStation.trim()) throw new Error('Fuel station name is required.');
+    if (!cleanNo) throw new Error('Receipt / invoice number is required.');
+    if (!updates.receiptDate) throw new Error('Receipt date is required.');
+    if (!Number.isFinite(updates.dieselLitres) || updates.dieselLitres <= 0) {
+      throw new Error('Diesel litres must be greater than zero.');
+    }
+    if (!Number.isFinite(updates.pricePerLitre) || updates.pricePerLitre <= 0) {
+      throw new Error('Price per litre must be greater than zero.');
+    }
+    if (!Number.isFinite(updates.totalAmount) || updates.totalAmount <= 0) {
+      throw new Error('Total amount must be greater than zero.');
+    }
+
+    const dup = this.receipts.some(
+      (r) =>
+        r.id !== receiptId &&
+        r.lorryId === existing.lorryId &&
+        normalizeReceiptNo(r.receiptNumber) === cleanNo &&
+        r.receiptDate === updates.receiptDate
+    );
+    if (dup) {
+      throw new Error(
+        `Duplicate receipt detected: "${cleanNo}" on ${updates.receiptDate} already exists.`
+      );
+    }
+
+    const updated: FuelReceiptRecord = {
+      ...existing,
+      fuelStation: updates.fuelStation.trim(),
+      receiptNumber: cleanNo,
+      receiptDate: updates.receiptDate,
+      dieselLitres: round2(updates.dieselLitres),
+      pricePerLitre: round2(updates.pricePerLitre),
+      totalAmount: round2(updates.totalAmount),
+    };
+
+    this.receipts[idx] = updated;
+    this.notify();
+    return updated;
+  }
 }
 
 export const FuelReceiptService = new FuelReceiptServiceClass();

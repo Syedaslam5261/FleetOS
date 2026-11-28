@@ -29,11 +29,12 @@ import { Lorry } from '../../types/lorry';
 import { calculateTripFuel, summarize } from '../../utils/fuelAnalytics';
 import { fetchRoadRoute, formatDuration } from '../../services/routingService';
 import { FuelEstimateService } from '../../services/fuelEstimateService';
+import { FuelReceiptService } from '../../services/fuelReceiptService';
 import { formatDate, formatINR } from '../../utils/formatters';
 
 interface FuelCalculatorSectionProps {
   lorry: Lorry;
-  lorryFuelEntries: FuelLedgerEntry[];
+  lorryFuelEntries?: FuelLedgerEntry[];
 }
 
 interface StopItem {
@@ -45,17 +46,18 @@ const BUFFER_PRESETS = [5, 10, 15, 20, 25, 30] as const;
 
 export const FuelCalculatorSection: React.FC<FuelCalculatorSectionProps> = ({
   lorry,
-  lorryFuelEntries,
+  lorryFuelEntries = [],
 }) => {
-  // Derive saved mileage & latest diesel price strictly from this lorry's recorded entries
+  // Derive default diesel price strictly from authoritative FuelReceiptService (never FUEL_LEDGER)
   const lorryDefaults = useMemo(() => {
     const stats = summarize(lorryFuelEntries);
+    const latestReceipt = FuelReceiptService.getByLorryId(lorry.id)[0];
     return {
       mileage: stats.avgMileage ? stats.avgMileage.toFixed(2) : '',
-      price: lorryFuelEntries[0] ? lorryFuelEntries[0].ratePerLitre.toFixed(2) : '91.50',
+      price: latestReceipt ? latestReceipt.pricePerLitre.toFixed(2) : '91.50',
       fullTankFills: stats.fullTankFills,
     };
-  }, [lorryFuelEntries]);
+  }, [lorry.id, lorryFuelEntries]);
 
   // Section 1: Route State
   const [origin, setOrigin] = useState<RouteLocation | null>(null);
