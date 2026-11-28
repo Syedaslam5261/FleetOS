@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
   ArrowRight,
@@ -27,8 +28,11 @@ import { ServiceSectionSheet, SheetSectionKey } from './ServiceSectionSheet';
 interface LorryServicesScreenProps {
   lorry: Lorry;
   onBack: () => void;
-  /** Navigates to `/fleet/${lorry.id}${relativePath}` */
-  onNavigatePath: (relativePath: string) => void;
+  /** Navigates to `/fleet/${lorry.id}${relativePath}` with optional React Router state */
+  onNavigatePath: (
+    relativePath: string,
+    navState?: { returnSheet?: SheetSectionKey; fromServiceId?: string }
+  ) => void;
 }
 
 const STATUS_PILL: Record<LorryStatus, { bg: string; dot: string; text: string }> = {
@@ -92,16 +96,47 @@ const SERVICE_CARD_THEMES: Record<
 
 const MAIN_SECTION_ORDER: MainSectionKey[] = ['maps', 'diesel', 'maintenance', 'invoices'];
 
+const VALID_SHEETS: SheetSectionKey[] = ['maps', 'diesel', 'maintenance', 'invoices'];
+
 export const LorryServicesScreen: React.FC<LorryServicesScreenProps> = ({
   lorry,
   onBack,
   onNavigatePath,
 }) => {
-  const [openSheet, setOpenSheet] = useState<SheetSectionKey | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [tick, setTick] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // URL-driven sheet state so Browser Back & Android Back return directly to the open modal
+  const rawSheet = searchParams.get('sheet');
+  const openSheet: SheetSectionKey | null =
+    rawSheet && VALID_SHEETS.includes(rawSheet as SheetSectionKey)
+      ? (rawSheet as SheetSectionKey)
+      : null;
+
+  const setOpenSheet = useCallback(
+    (next: SheetSectionKey | null) => {
+      if (next) {
+        if (openSheet === next) return;
+        navigate(`/fleet/${lorry.id}?sheet=${next}`, {
+          replace: openSheet !== null,
+          state: { sheetOpenedInApp: true },
+        });
+      } else if (openSheet) {
+        const navState = location.state as { sheetOpenedInApp?: boolean } | null;
+        if (navState?.sheetOpenedInApp) {
+          navigate(-1);
+        } else {
+          navigate(`/fleet/${lorry.id}`, { replace: true });
+        }
+      }
+    },
+    [lorry.id, openSheet, navigate, location.state]
+  );
 
   useEffect(() => {
     const u1 = FuelEstimateService.subscribe(() => setTick((t) => t + 1));
@@ -460,11 +495,14 @@ export const LorryServicesScreen: React.FC<LorryServicesScreenProps> = ({
       {/* Blurred Bottom-Sheet Overlay for Selected Section */}
       <ServiceSectionSheet
         section={openSheet}
+        lorryId={lorry.id}
         lorryRegistration={lorry.registrationNumber}
         onClose={() => setOpenSheet(null)}
-        onSelectService={(targetPath) => {
-          setOpenSheet(null);
-          onNavigatePath(targetPath);
+        onSelectService={(targetPath, serviceId) => {
+          onNavigatePath(targetPath, {
+            returnSheet: openSheet ?? undefined,
+            fromServiceId: serviceId,
+          });
         }}
       />
     </div>

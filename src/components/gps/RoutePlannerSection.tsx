@@ -34,6 +34,7 @@ import { LocationSearchInput } from '../diesel/LocationSearchInput';
 import { MapWaypointMarker, RoutePlannerMap } from './RoutePlannerMap';
 import { Button } from '../common/Button';
 import { formatDate } from '../../utils/formatters';
+import { NavigationStateStore } from '../../utils/navigationStateStore';
 
 interface RoutePlannerSectionProps {
   lorry: Lorry;
@@ -58,11 +59,38 @@ export const RoutePlannerSection: React.FC<RoutePlannerSectionProps> = ({ lorry 
     [allLorries, selectedLorryId, lorry]
   );
 
-  // Waypoint state
-  const [startLocation, setStartLocation] = useState<RouteLocation | null>(null);
-  const [stops, setStops] = useState<IntermediateStopItem[]>([]);
-  const [destination, setDestination] = useState<RouteLocation | null>(null);
+  // Waypoint state (hydrates unsubmitted draft if user navigated back and returned)
+  const initialDraft = useMemo(
+    () =>
+      NavigationStateStore.getDraft<{
+        startLocation: RouteLocation | null;
+        stops: IntermediateStopItem[];
+        destination: RouteLocation | null;
+      }>(lorry.id, 'route-planner'),
+    [lorry.id]
+  );
+
+  const [startLocation, setStartLocation] = useState<RouteLocation | null>(
+    initialDraft?.startLocation ?? null
+  );
+  const [stops, setStops] = useState<IntermediateStopItem[]>(initialDraft?.stops ?? []);
+  const [destination, setDestination] = useState<RouteLocation | null>(
+    initialDraft?.destination ?? null
+  );
   const [pickTarget, setPickTarget] = useState<PickTarget | null>(null);
+
+  // Persist unsubmitted form draft per lorryId so navigating back never loses entered locations
+  useEffect(() => {
+    if (startLocation || destination || stops.length > 0) {
+      NavigationStateStore.setDraft(lorry.id, 'route-planner', {
+        startLocation,
+        stops,
+        destination,
+      });
+    } else {
+      NavigationStateStore.clearDraft(lorry.id, 'route-planner');
+    }
+  }, [lorry.id, startLocation, stops, destination]);
 
   // Routing state (strictly from OSRM responses, never fabricated)
   const [routes, setRoutes] = useState<RoutedPathResult[]>([]);

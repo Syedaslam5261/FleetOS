@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   AlertTriangle,
   BarChart3,
@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { MainSectionKey, SECTION_ICON_SYSTEM } from '../common/FleetOSBrand';
+import { NavigationStateStore } from '../../utils/navigationStateStore';
 
 export type SheetSectionKey = MainSectionKey;
 
@@ -253,19 +254,28 @@ export const SECTION_SHEET_CONFIG: Record<SheetSectionKey, SectionConfig> = {
 
 interface ServiceSectionSheetProps {
   section: SheetSectionKey | null;
+  lorryId: string;
   lorryRegistration: string;
   onClose: () => void;
-  onSelectService: (targetPath: string) => void;
+  onSelectService: (targetPath: string, serviceId: string) => void;
 }
 
 export const ServiceSectionSheet: React.FC<ServiceSectionSheetProps> = ({
   section,
+  lorryId,
   lorryRegistration,
   onClose,
   onSelectService,
 }) => {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!section) return;
+    // Restore previous scroll position for this lorry + section modal
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = NavigationStateStore.getSheetScroll(lorryId, section);
+    }
+
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
@@ -275,12 +285,23 @@ export const ServiceSectionSheet: React.FC<ServiceSectionSheetProps> = ({
       document.body.style.overflow = '';
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [section, onClose]);
+  }, [section, lorryId, onClose]);
 
   if (!section) return null;
 
   const config = SECTION_SHEET_CONFIG[section];
   const HeaderIcon = config.headerIcon;
+
+  const handleServiceClick = (targetPath: string, serviceId: string) => {
+    if (scrollContainerRef.current) {
+      NavigationStateStore.setSheetScroll(
+        lorryId,
+        section,
+        scrollContainerRef.current.scrollTop
+      );
+    }
+    onSelectService(targetPath, serviceId);
+  };
 
   return (
     <div
@@ -334,13 +355,19 @@ export const ServiceSectionSheet: React.FC<ServiceSectionSheetProps> = ({
         </div>
 
         {/* Scrollable 2-Column Icon Grid */}
-        <div className="overflow-y-auto px-5 pb-6">
+        <div
+          ref={scrollContainerRef}
+          onScroll={(e) =>
+            NavigationStateStore.setSheetScroll(lorryId, section, e.currentTarget.scrollTop)
+          }
+          className="overflow-y-auto px-5 pb-6"
+        >
           <div className="grid grid-cols-2 gap-3">
             {config.items.map(({ id, label, icon: Icon, targetPath, iconColorClass }) => (
               <button
                 key={id}
                 type="button"
-                onClick={() => onSelectService(targetPath)}
+                onClick={() => handleServiceClick(targetPath, id)}
                 className="group flex min-h-[116px] flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-[#1b202b] px-3 py-4 text-center transition-colors hover:border-white/20 hover:bg-[#232938] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500/50"
               >
                 <Icon className={clsx('h-7 w-7 flex-shrink-0', iconColorClass)} strokeWidth={1.85} />

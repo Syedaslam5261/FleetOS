@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   BarChart3,
@@ -31,6 +31,7 @@ import { DriverTab } from '../../components/fleet/profile/DriverTab';
 import { LiveJourneyMonitoring } from '../../components/gps/LiveJourneyMonitoring';
 import { RoutePlannerSection } from '../../components/gps/RoutePlannerSection';
 import { LorryServicesScreen } from '../../components/fleet/LorryServicesScreen';
+import { SheetSectionKey } from '../../components/fleet/ServiceSectionSheet';
 import { LorryExpenseDashboard } from '../../components/expenses/LorryExpenseDashboard';
 import { LorryExpenseReports } from '../../components/expenses/LorryExpenseReports';
 import { TripFinancialStatementView } from '../../components/expenses/TripFinancialStatementView';
@@ -124,6 +125,11 @@ export const LorryProfilePage: React.FC = () => {
     subSection?: string;
   }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const navState = location.state as {
+    returnSheet?: SheetSectionKey;
+    fromServiceId?: string;
+  } | null;
 
   const lorry = useMemo(() => LorryService.getLorryById(lorryId), [lorryId]);
   const lorryFuelEntries = useMemo(
@@ -172,19 +178,43 @@ export const LorryProfilePage: React.FC = () => {
       : DIESEL_SUBSECTIONS.find((d) => d.key === activeDieselSub);
   const activeMaintenanceMeta = MAINTENANCE_SUBSECTIONS.find((m) => m.key === activeMaintenanceSub);
 
-  const backConfig = !lorry
+  const SHEET_LABELS: Record<SheetSectionKey, string> = {
+    maps: 'Back to Maps & GPS',
+    diesel: 'Back to Diesel Management',
+    maintenance: 'Back to Maintenance',
+    invoices: 'Back to Invoices',
+  };
+
+  // Determine exact Back target:
+  // 1. If opened from a section bottom-sheet modal (navState.returnSheet), pop back cleanly via history (-1)
+  //    so the exact same modal, lorryId, and scroll position are restored without duplicate history entries!
+  // 2. If deep-linked directly to a service sub-screen, navigate to `/fleet/${lorry.id}?sheet=${inferredSheet}`.
+  // 3. Deeper sub-views inside Expenses (e.g. Trip P&L statement from Expenses) return to Expenses first.
+  const backConfig: { label: string; to?: string; useHistoryBack?: boolean } = !lorry
     ? { label: 'Back to Lorry Management', to: '/fleet' }
-    : activeMapsSub
-      ? { label: 'Back to Maps & GPS', to: `/fleet/${lorry.id}/maps` }
-      : activeDieselSub
-        ? { label: 'Back to Diesel Management', to: `/fleet/${lorry.id}/diesel` }
-        : activeMaintenanceSub
-          ? { label: 'Back to Maintenance', to: `/fleet/${lorry.id}/maintenance` }
-          : activeExpensesReports || activeExpensesTripId
-            ? { label: 'Back to Expenses', to: `/fleet/${lorry.id}/expenses` }
-            : activeSection
-              ? { label: `Back to ${lorry.registrationNumber}`, to: `/fleet/${lorry.id}` }
-              : { label: 'Back to Lorry Management', to: '/fleet' };
+    : navState?.returnSheet
+      ? { label: SHEET_LABELS[navState.returnSheet], useHistoryBack: true }
+      : activeMapsSub
+        ? { label: 'Back to Maps & GPS', to: `/fleet/${lorry.id}?sheet=maps` }
+        : activeDieselSub
+          ? { label: 'Back to Diesel Management', to: `/fleet/${lorry.id}?sheet=diesel` }
+          : activeMaintenanceSub
+            ? { label: 'Back to Maintenance', to: `/fleet/${lorry.id}?sheet=maintenance` }
+            : activeExpensesReports || activeExpensesTripId
+              ? { label: 'Back to Expenses', to: `/fleet/${lorry.id}/expenses` }
+              : activeSection === 'invoices'
+                ? { label: 'Back to Invoices', to: `/fleet/${lorry.id}?sheet=invoices` }
+                : activeSection
+                  ? { label: `Back to ${lorry.registrationNumber}`, to: `/fleet/${lorry.id}` }
+                  : { label: 'Back to Lorry Management', to: '/fleet' };
+
+  const handleBackClick = () => {
+    if (backConfig.useHistoryBack) {
+      navigate(-1);
+    } else if (backConfig.to) {
+      navigate(backConfig.to);
+    }
+  };
 
   const regOf = (id: string) => (lorry && id === lorry.id ? lorry.registrationNumber : id);
 
@@ -195,7 +225,9 @@ export const LorryProfilePage: React.FC = () => {
         key={lorry.id}
         lorry={lorry}
         onBack={() => navigate('/fleet')}
-        onNavigatePath={(relPath) => navigate(`/fleet/${lorry.id}${relPath}`)}
+        onNavigatePath={(relPath, state) =>
+          navigate(`/fleet/${lorry.id}${relPath}`, state ? { state } : undefined)
+        }
       />
     );
   }
@@ -239,7 +271,7 @@ export const LorryProfilePage: React.FC = () => {
           {/* Right: Back Button */}
           <button
             type="button"
-            onClick={() => navigate(backConfig.to)}
+            onClick={handleBackClick}
             className="inline-flex min-h-[44px] flex-shrink-0 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
           >
             <ArrowLeft className="h-4 w-4" />
