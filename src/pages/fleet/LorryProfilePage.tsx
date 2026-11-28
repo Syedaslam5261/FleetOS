@@ -75,13 +75,14 @@ const DIESEL_SUBSECTIONS = [
   { key: 'reports', label: 'Fuel Reports & Analytics', icon: BarChart3 },
 ] as const;
 
-const MAINTENANCE_SUBSECTIONS: { key: MaintenanceSubKey; label: string }[] = [
+const MAINTENANCE_SUBSECTIONS: { key: MaintenanceSubKey | 'documents'; label: string }[] = [
   { key: 'problems', label: 'Problems & Repairs' },
   { key: 'service', label: 'Service & Parts' },
   { key: 'driver-payments', label: 'Driver Payments' },
   { key: 'load-handling', label: 'Load & Handling Expenses' },
   { key: 'other-expenses', label: 'Other Lorry Expenses' },
   { key: 'cost-reports', label: 'Cost Reports' },
+  { key: 'documents', label: 'Insurance & RC' },
 ];
 
 const MAPS_SUBSECTIONS = [
@@ -137,10 +138,10 @@ export const LorryProfilePage: React.FC = () => {
         : (DIESEL_SUBSECTIONS.find((d) => d.key === subSection)?.key as DieselSubKey | undefined)
       : undefined;
 
-  const activeMaintenanceSub: MaintenanceSubKey | undefined =
+  const activeMaintenanceSub: (MaintenanceSubKey | 'documents') | undefined =
     activeSection === 'maintenance'
       ? (MAINTENANCE_SUBSECTIONS.find((m) => m.key === subSection)?.key as
-          | MaintenanceSubKey
+          | (MaintenanceSubKey | 'documents')
           | undefined)
       : undefined;
 
@@ -186,14 +187,14 @@ export const LorryProfilePage: React.FC = () => {
 
   const regOf = (id: string) => (lorry && id === lorry.id ? lorry.registrationNumber : id);
 
-  // Level 1: Individual Lorry Services Screen (mobile-first dark 2x2 grid)
+  // Level 1: Individual Lorry Services Screen (mobile-first dark 2x2 grid + bottom-sheet overlays)
   if (lorry && !activeSection) {
     return (
       <LorryServicesScreen
         key={lorry.id}
         lorry={lorry}
         onBack={() => navigate('/fleet')}
-        onNavigateSection={(sec) => navigate(`/fleet/${lorry.id}/${sec}`)}
+        onNavigatePath={(relPath) => navigate(`/fleet/${lorry.id}${relPath}`)}
       />
     );
   }
@@ -494,6 +495,56 @@ export const LorryProfilePage: React.FC = () => {
                 )}
                 {activeMaintenanceSub === 'cost-reports' && (
                   <MaintenanceCostReportsSection key={lorry.id} lorry={lorry} />
+                )}
+                {activeMaintenanceSub === 'documents' && (
+                  <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+                    <div>
+                      <h2 className="text-base font-bold text-slate-900">
+                        Insurance, RC &amp; Compliance —{' '}
+                        <span className="font-mono">{lorry.registrationNumber}</span>
+                      </h2>
+                      <p className="text-xs text-slate-500">
+                        Document metadata stored on this lorry&apos;s master record. Edit lorry details in Lorry Management to update expiry dates.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {[
+                        {
+                          label: 'Registration Certificate (RC)',
+                          expiry: lorry.registrationExpiryDate,
+                          file: lorry.rcDocument?.name,
+                        },
+                        {
+                          label: 'Commercial Vehicle Insurance',
+                          expiry: lorry.insuranceExpiryDate,
+                          file: lorry.insuranceDocument?.name,
+                        },
+                        {
+                          label: 'Fitness Certificate',
+                          expiry: undefined,
+                          file: lorry.fitnessDocument?.name,
+                        },
+                        {
+                          label: 'PUC & National Permit',
+                          expiry: undefined,
+                          file: lorry.permitDocument?.name || lorry.pucDocument?.name,
+                        },
+                      ].map((doc) => (
+                        <div
+                          key={doc.label}
+                          className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-1"
+                        >
+                          <p className="text-xs font-bold text-slate-900">{doc.label}</p>
+                          <p className="text-xs text-slate-600">
+                            Expiry: <strong>{doc.expiry ?? 'Not recorded'}</strong>
+                          </p>
+                          <p className="text-[11px] text-slate-500">
+                            File: {doc.file ?? 'No document uploaded'}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             )}
