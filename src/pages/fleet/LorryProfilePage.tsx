@@ -3,11 +3,11 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   BarChart3,
+  Bookmark,
   Calculator,
   ChevronRight,
   Droplets,
   FileSpreadsheet,
-  FileText,
   Fuel,
   Map,
   Navigation,
@@ -15,9 +15,7 @@ import {
   Route,
   ScanLine,
   SearchX,
-  Truck,
   UserRound,
-  Wrench,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button } from '../../components/common/Button';
@@ -30,6 +28,7 @@ import { InvoiceTab } from '../../components/fleet/profile/InvoiceTab';
 import { DriverTab } from '../../components/fleet/profile/DriverTab';
 import { LiveJourneyMonitoring } from '../../components/gps/LiveJourneyMonitoring';
 import { RoutePlannerSection } from '../../components/gps/RoutePlannerSection';
+import { SavedRoutesSection } from '../../components/gps/SavedRoutesSection';
 import { LorryServicesScreen } from '../../components/fleet/LorryServicesScreen';
 import { SheetSectionKey } from '../../components/fleet/ServiceSectionSheet';
 import { LorryExpenseDashboard } from '../../components/expenses/LorryExpenseDashboard';
@@ -88,8 +87,9 @@ const MAINTENANCE_SUBSECTIONS: { key: MaintenanceSubKey | 'documents'; label: st
 ];
 
 const MAPS_SUBSECTIONS = [
-  { key: 'route-planner', label: 'Plan a Route', icon: Route },
-  { key: 'live', label: 'Live Journey Monitoring', icon: Navigation },
+  { key: 'live', label: 'Live Vehicle Location', icon: Navigation },
+  { key: 'route-planner', label: 'Route Calculator', icon: Route },
+  { key: 'saved-routes', label: 'Saved Routes', icon: Bookmark },
 ] as const;
 
 type SectionKey = (typeof PROFILE_SECTIONS)[number]['key'];
@@ -700,6 +700,17 @@ export const LorryProfilePage: React.FC = () => {
                 )}
                 {activeMapsSub === 'live' && (
                   <LiveJourneyMonitoring key={lorry.id} lorry={lorry} />
+                )}
+                {activeMapsSub === 'saved-routes' && (
+                  <SavedRoutesSection
+                    key={lorry.id}
+                    lorry={lorry}
+                    onOpenCalculator={() =>
+                      navigate(`/fleet/${lorry.id}/maps/route-planner`, {
+                        state: navState ?? { returnSheet: 'maps' },
+                      })
+                    }
+                  />
                 )}
               </div>
             )}

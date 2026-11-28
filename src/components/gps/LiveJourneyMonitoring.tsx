@@ -282,6 +282,10 @@ export const LiveJourneyMonitoring: React.FC<LiveJourneyMonitoringProps> = ({ lo
     remainingRoadKm !== null
       ? Math.round((travelledDistanceDisplay + remainingRoadKm) * 10) / 10
       : null;
+  const journeyProgressPct =
+    totalTripDistanceDisplay && totalTripDistanceDisplay > 0
+      ? Math.min(100, Math.max(0, Math.round((travelledDistanceDisplay / totalTripDistanceDisplay) * 100)))
+      : 0;
 
   const estimatedArrivalIso =
     remainingDurationSec !== null
@@ -426,6 +430,24 @@ export const LiveJourneyMonitoring: React.FC<LiveJourneyMonitoringProps> = ({ lo
             Road routing service unavailable ({routingError}). Showing verified GPS points directly.
           </p>
         )}
+      </div>
+
+      {/* Journey Progress Bar */}
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-2">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-bold text-slate-900">Journey Progress</span>
+          <span className="font-mono font-bold text-emerald-700">{journeyProgressPct}%</span>
+        </div>
+        <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+          <div
+            style={{ width: `${journeyProgressPct}%` }}
+            className="h-full rounded-full bg-emerald-600 transition-all"
+          />
+        </div>
+        <div className="flex items-center justify-between text-[11px] text-slate-500">
+          <span className="truncate max-w-[45%]">{journey.startLocation.name}</span>
+          <span className="truncate max-w-[45%] text-right">{journey.destination.name}</span>
+        </div>
       </div>
 
       {/* B. Live Journey Information Grid */}

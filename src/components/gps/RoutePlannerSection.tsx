@@ -21,7 +21,7 @@ import { Lorry } from '../../types/lorry';
 import { RouteLocation, RoutedPathResult } from '../../types/fuel';
 import { LorryService } from '../../services/lorryService';
 import {
-  fetchRoadRouteAlternatives,
+  fetchRoadRoute,
   formatDuration,
   reverseGeocodeLocation,
 } from '../../services/routingService';
@@ -263,9 +263,9 @@ export const RoutePlannerSection: React.FC<RoutePlannerSectionProps> = ({ lorry 
 
     setIsCalculating(true);
     try {
-      const results = await fetchRoadRouteAlternatives(orderedWaypoints, controller.signal);
+      const primaryRoute = await fetchRoadRoute(orderedWaypoints, controller.signal);
       if (!controller.signal.aborted) {
-        setRoutes(results);
+        setRoutes([primaryRoute]);
         setSelectedRouteIdx(0);
       }
     } catch (err) {
@@ -590,37 +590,6 @@ export const RoutePlannerSection: React.FC<RoutePlannerSectionProps> = ({ lorry 
               Clear Route
             </Button>
           </div>
-
-          {/* Alternative Routes Comparison (when OSRM returns > 1 route) */}
-          {routes.length > 1 && (
-            <div className="space-y-2 border-t border-slate-100 pt-3">
-              <p className="text-xs font-bold text-slate-700">
-                Compare Alternative Road Routes ({routes.length})
-              </p>
-              <div className="grid grid-cols-1 gap-2">
-                {routes.map((rt, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setSelectedRouteIdx(idx)}
-                    className={clsx(
-                      'flex items-center justify-between rounded-lg border px-3 py-2.5 text-left text-xs transition-colors',
-                      selectedRouteIdx === idx
-                        ? 'border-blue-600 bg-blue-50/70 text-blue-950'
-                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                    )}
-                  >
-                    <span className="font-bold">
-                      {idx === 0 ? 'Primary Route' : `Alternative ${idx}`}
-                    </span>
-                    <span className="font-mono font-semibold">
-                      {rt.distanceKm.toLocaleString('en-IN')} km · Est. {formatDuration(rt.durationSeconds)}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Large Interactive Map */}
