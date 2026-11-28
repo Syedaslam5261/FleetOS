@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button } from '../../components/common/Button';
+import { FleetOSLogo, SECTION_ICON_SYSTEM } from '../../components/common/FleetOSBrand';
 import { LorryService } from '../../services/lorryService';
 import { FUEL_LEDGER } from '../../services/mockFuelLedger';
 import { filterEntries } from '../../utils/fuelAnalytics';
@@ -60,10 +61,10 @@ const STATUS_STYLES: Record<LorryStatus, string> = {
 };
 
 const PROFILE_SECTIONS = [
-  { key: 'maps', label: 'Maps & GPS Tracking', icon: Map },
-  { key: 'invoices', label: 'Invoice Management', icon: FileText },
-  { key: 'diesel', label: 'Diesel Management', icon: Droplets },
-  { key: 'maintenance', label: 'Maintenance Management', icon: Wrench },
+  { key: 'maps', label: 'Maps & GPS Tracking', icon: SECTION_ICON_SYSTEM.maps.icon },
+  { key: 'invoices', label: 'Invoice Management', icon: SECTION_ICON_SYSTEM.invoices.icon },
+  { key: 'diesel', label: 'Diesel Management', icon: SECTION_ICON_SYSTEM.diesel.icon },
+  { key: 'maintenance', label: 'Maintenance Management', icon: SECTION_ICON_SYSTEM.maintenance.icon },
   { key: 'expenses', label: 'Expenses Management', icon: Receipt },
   { key: 'driver', label: 'Driver Management', icon: UserRound },
 ] as const;
@@ -209,18 +210,10 @@ export const LorryProfilePage: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate('/fleet')}
-              className="flex items-center gap-2.5 flex-shrink-0 focus:outline-none"
+              className="flex items-center flex-shrink-0 focus:outline-none"
               title="FleetOS — Lorry Management"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white shadow-sm">
-                <Truck className="h-4 w-4" />
-              </div>
-              <div className="hidden sm:flex items-center gap-1.5">
-                <span className="font-mono text-base font-bold tracking-tight text-[#0b1329]">FleetOS</span>
-                <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-blue-600">
-                  Pro
-                </span>
-              </div>
+              <FleetOSLogo variant="light" compactOnMobile />
             </button>
 
             {lorry && (

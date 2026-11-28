@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ChevronRight, Receipt, SearchX, Truck } from 'lucide-react';
+import { FleetOSLogo } from '../../components/common/FleetOSBrand';
 import { clsx } from 'clsx';
 import { LorryService } from '../../services/lorryService';
 import { FuelReceiptService } from '../../services/fuelReceiptService';
@@ -80,18 +81,10 @@ export const ExpensesPage: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate('/fleet')}
-              className="flex items-center gap-2.5 flex-shrink-0 focus:outline-none"
+              className="flex items-center flex-shrink-0 focus:outline-none"
               title="FleetOS — Lorry Management"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white shadow-sm">
-                <Truck className="h-4 w-4" />
-              </div>
-              <div className="hidden sm:flex items-center gap-1.5">
-                <span className="font-mono text-base font-bold tracking-tight text-[#0b1329]">FleetOS</span>
-                <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-blue-600">
-                  Pro
-                </span>
-              </div>
+              <FleetOSLogo variant="light" compactOnMobile />
             </button>
 
             <span className="h-6 w-px bg-slate-200 flex-shrink-0" aria-hidden="true" />

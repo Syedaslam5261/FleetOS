@@ -9,13 +9,10 @@ import {
   Droplets,
   FilePlus2,
   FileSpreadsheet,
-  FileText,
-  Fuel,
   Gauge,
   History,
   IndianRupee,
   Layers,
-  MapPin,
   Navigation,
   Radio,
   Receipt,
@@ -30,13 +27,14 @@ import {
   X,
 } from 'lucide-react';
 import { clsx } from 'clsx';
+import { MainSectionKey, SECTION_ICON_SYSTEM } from '../common/FleetOSBrand';
 
-export type SheetSectionKey = 'maps' | 'diesel' | 'maintenance' | 'invoices';
+export type SheetSectionKey = MainSectionKey;
 
 export interface SheetServiceItem {
   id: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   /** Relative path appended to `/fleet/${lorryId}` */
   targetPath: string;
   iconColorClass: string;
@@ -45,7 +43,7 @@ export interface SheetServiceItem {
 interface SectionConfig {
   key: SheetSectionKey;
   title: string;
-  headerIcon: React.ComponentType<{ className?: string }>;
+  headerIcon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   headerIconBg: string;
   items: SheetServiceItem[];
 }
@@ -53,44 +51,44 @@ interface SectionConfig {
 export const SECTION_SHEET_CONFIG: Record<SheetSectionKey, SectionConfig> = {
   maps: {
     key: 'maps',
-    title: 'Maps & GPS',
-    headerIcon: MapPin,
-    headerIconBg: 'bg-blue-500/20 text-blue-400',
+    title: SECTION_ICON_SYSTEM.maps.label,
+    headerIcon: SECTION_ICON_SYSTEM.maps.icon,
+    headerIconBg: SECTION_ICON_SYSTEM.maps.badgeDark,
     items: [
       {
         id: 'route-calculator',
         label: 'Route Calculator',
         icon: Route,
         targetPath: '/maps/route-planner',
-        iconColorClass: 'text-sky-400',
+        iconColorClass: 'text-blue-400',
       },
       {
         id: 'live-location',
         label: 'Live Location',
         icon: Radio,
         targetPath: '/maps/live',
-        iconColorClass: 'text-blue-400',
+        iconColorClass: 'text-sky-400',
       },
       {
         id: 'trip-history',
         label: 'Trip History',
         icon: CalendarDays,
         targetPath: '/expenses',
-        iconColorClass: 'text-sky-300',
+        iconColorClass: 'text-blue-300',
       },
       {
         id: 'saved-routes',
         label: 'Saved Routes',
         icon: Bookmark,
         targetPath: '/maps/route-planner',
-        iconColorClass: 'text-blue-300',
+        iconColorClass: 'text-sky-300',
       },
       {
         id: 'geofence-alerts',
         label: 'Geofence & Alerts',
         icon: Navigation,
         targetPath: '/maps/live',
-        iconColorClass: 'text-amber-300',
+        iconColorClass: 'text-blue-400',
       },
       {
         id: 'journey-tracking',
@@ -103,9 +101,9 @@ export const SECTION_SHEET_CONFIG: Record<SheetSectionKey, SectionConfig> = {
   },
   diesel: {
     key: 'diesel',
-    title: 'Diesel Management',
-    headerIcon: Fuel,
-    headerIconBg: 'bg-amber-500/20 text-amber-400',
+    title: SECTION_ICON_SYSTEM.diesel.label,
+    headerIcon: SECTION_ICON_SYSTEM.diesel.icon,
+    headerIconBg: SECTION_ICON_SYSTEM.diesel.badgeDark,
     items: [
       {
         id: 'diesel-calculator',
@@ -153,16 +151,16 @@ export const SECTION_SHEET_CONFIG: Record<SheetSectionKey, SectionConfig> = {
   },
   maintenance: {
     key: 'maintenance',
-    title: 'Maintenance',
-    headerIcon: Wrench,
-    headerIconBg: 'bg-purple-500/20 text-purple-300',
+    title: SECTION_ICON_SYSTEM.maintenance.label,
+    headerIcon: SECTION_ICON_SYSTEM.maintenance.icon,
+    headerIconBg: SECTION_ICON_SYSTEM.maintenance.badgeDark,
     items: [
       {
         id: 'report-problem',
         label: 'Report a Problem',
         icon: AlertTriangle,
         targetPath: '/maintenance/problems',
-        iconColorClass: 'text-amber-400',
+        iconColorClass: 'text-purple-300',
       },
       {
         id: 'service-repairs',
@@ -203,9 +201,9 @@ export const SECTION_SHEET_CONFIG: Record<SheetSectionKey, SectionConfig> = {
   },
   invoices: {
     key: 'invoices',
-    title: 'Invoices',
-    headerIcon: FileText,
-    headerIconBg: 'bg-emerald-500/20 text-emerald-400',
+    title: SECTION_ICON_SYSTEM.invoices.label,
+    headerIcon: SECTION_ICON_SYSTEM.invoices.icon,
+    headerIconBg: SECTION_ICON_SYSTEM.invoices.badgeDark,
     items: [
       {
         id: 'create-invoice',
@@ -219,7 +217,7 @@ export const SECTION_SHEET_CONFIG: Record<SheetSectionKey, SectionConfig> = {
         label: 'Invoice History',
         icon: FileSpreadsheet,
         targetPath: '/invoices',
-        iconColorClass: 'text-teal-300',
+        iconColorClass: 'text-emerald-300',
       },
       {
         id: 'payments-collections',
@@ -240,7 +238,7 @@ export const SECTION_SHEET_CONFIG: Record<SheetSectionKey, SectionConfig> = {
         label: 'Outstanding Bills',
         icon: Wallet,
         targetPath: '/invoices',
-        iconColorClass: 'text-teal-400',
+        iconColorClass: 'text-teal-300',
       },
       {
         id: 'revenue-reports',
@@ -313,7 +311,7 @@ export const ServiceSectionSheet: React.FC<ServiceSectionSheetProps> = ({
                 config.headerIconBg
               )}
             >
-              <HeaderIcon className="h-6 w-6" />
+              <HeaderIcon className="h-5 w-5" strokeWidth={1.9} />
             </div>
             <div className="min-w-0">
               <h2 className="truncate text-lg font-bold leading-tight text-white">
@@ -345,7 +343,7 @@ export const ServiceSectionSheet: React.FC<ServiceSectionSheetProps> = ({
                 onClick={() => onSelectService(targetPath)}
                 className="group flex min-h-[116px] flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-[#1b202b] px-3 py-4 text-center transition-colors hover:border-white/20 hover:bg-[#232938] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500/50"
               >
-                <Icon className={clsx('h-8 w-8 flex-shrink-0', iconColorClass)} />
+                <Icon className={clsx('h-7 w-7 flex-shrink-0', iconColorClass)} strokeWidth={1.85} />
                 <span className="text-xs font-semibold leading-snug text-slate-100">
                   {label}
                 </span>
