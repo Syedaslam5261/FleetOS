@@ -29,6 +29,7 @@ import { InvoiceTab } from '../../components/fleet/profile/InvoiceTab';
 import { DriverTab } from '../../components/fleet/profile/DriverTab';
 import { LiveJourneyMonitoring } from '../../components/gps/LiveJourneyMonitoring';
 import { RoutePlannerSection } from '../../components/gps/RoutePlannerSection';
+import { LorryServicesScreen } from '../../components/fleet/LorryServicesScreen';
 import { LorryExpenseDashboard } from '../../components/expenses/LorryExpenseDashboard';
 import { LorryExpenseReports } from '../../components/expenses/LorryExpenseReports';
 import { TripFinancialStatementView } from '../../components/expenses/TripFinancialStatementView';
@@ -184,6 +185,18 @@ export const LorryProfilePage: React.FC = () => {
               : { label: 'Back to Lorry Management', to: '/fleet' };
 
   const regOf = (id: string) => (lorry && id === lorry.id ? lorry.registrationNumber : id);
+
+  // Level 1: Individual Lorry Services Screen (mobile-first dark 2x2 grid)
+  if (lorry && !activeSection) {
+    return (
+      <LorryServicesScreen
+        key={lorry.id}
+        lorry={lorry}
+        onBack={() => navigate('/fleet')}
+        onNavigateSection={(sec) => navigate(`/fleet/${lorry.id}/${sec}`)}
+      />
+    );
+  }
 
   return (
     <div key={lorryId} className="min-h-screen w-full bg-slate-50 font-sans">

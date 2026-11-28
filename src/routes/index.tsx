@@ -5,6 +5,7 @@ import { DieselDashboardPage } from '../pages/diesel/DieselDashboard';
 import { LorryManagementPage } from '../pages/fleet/LorryManagementPage';
 import { LorryProfilePage } from '../pages/fleet/LorryProfilePage';
 import { ExpensesPage } from '../pages/expenses/ExpensesPage';
+import { MobileMapsPrototypePage } from '../pages/prototype/MobileMapsPrototypePage';
 import { ModulePlaceholder } from '../pages/common/ModulePlaceholder';
 
 const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined;
@@ -72,6 +73,10 @@ export const router = createBrowserRouter(
           element: <Navigate to="/fleet" replace />,
         },
       ],
+    },
+    {
+      path: '/mobile-maps-prototype',
+      element: <MobileMapsPrototypePage />,
     },
     {
       path: '/expenses',
