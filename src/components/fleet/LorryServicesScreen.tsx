@@ -1,17 +1,18 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
+  ArrowRight,
+  BarChart3,
   Bell,
   ChevronRight,
-  Droplets,
-  FileText,
-  MapPin,
-  MoreVertical,
-  Navigation,
+  Clock,
+  Fuel,
+  Home,
+  MoreHorizontal,
   Receipt,
+  Route,
   Truck,
   UserRound,
-  Wrench,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Lorry, LorryStatus } from '../../types/lorry';
@@ -21,80 +22,173 @@ import { SavedRouteService } from '../../services/savedRouteService';
 import { LorryRecordsService } from '../../services/lorryRecordsService';
 import { MaintenanceService } from '../../services/maintenanceService';
 import { formatDuration } from '../../services/routingService';
-import { formatDate } from '../../utils/formatters';
 
 interface LorryServicesScreenProps {
   lorry: Lorry;
   onBack: () => void;
-  onNavigateSection: (section: 'maps' | 'diesel' | 'maintenance' | 'invoices' | 'expenses' | 'driver') => void;
+  onNavigateSection: (
+    section: 'maps' | 'diesel' | 'maintenance' | 'invoices' | 'expenses' | 'driver'
+  ) => void;
 }
 
 const STATUS_PILL: Record<LorryStatus, { bg: string; dot: string; text: string }> = {
-  Available: {
-    bg: 'bg-emerald-500/15 border-emerald-500/30',
-    dot: 'bg-emerald-400',
-    text: 'text-emerald-300',
+  'On Trip': {
+    bg: 'bg-[#125634]/85 border-emerald-400/25',
+    dot: 'bg-[#34eb7a]',
+    text: 'text-white',
   },
   Active: {
-    bg: 'bg-emerald-500/15 border-emerald-500/30',
-    dot: 'bg-emerald-400',
-    text: 'text-emerald-300',
+    bg: 'bg-[#125634]/85 border-emerald-400/25',
+    dot: 'bg-[#34eb7a]',
+    text: 'text-white',
   },
-  'On Trip': {
-    bg: 'bg-blue-500/15 border-blue-500/30',
-    dot: 'bg-blue-400',
-    text: 'text-blue-300',
+  Available: {
+    bg: 'bg-[#125634]/85 border-emerald-400/25',
+    dot: 'bg-[#34eb7a]',
+    text: 'text-white',
   },
   Maintenance: {
-    bg: 'bg-amber-500/15 border-amber-500/30',
+    bg: 'bg-amber-600/35 border-amber-400/30',
     dot: 'bg-amber-400',
-    text: 'text-amber-300',
+    text: 'text-amber-100',
   },
   Inactive: {
-    bg: 'bg-slate-500/15 border-slate-500/30',
+    bg: 'bg-slate-700/60 border-slate-500/30',
     dot: 'bg-slate-400',
-    text: 'text-slate-300',
+    text: 'text-slate-200',
   },
 };
 
-const SERVICE_CARDS = [
-  {
-    key: 'maps' as const,
-    title: 'Maps & GPS',
-    subtitle: 'Route, live tracking & trip history.',
-    icon: MapPin,
-    cardBg: 'bg-[#10192d] hover:bg-[#14203a] border-blue-500/20',
-    iconBg: 'bg-blue-500/15 text-blue-400',
-    arrowColor: 'text-blue-400/80',
-  },
-  {
-    key: 'diesel' as const,
-    title: 'Diesel Management',
-    subtitle: 'Fuel, receipts & reports.',
-    icon: Droplets,
-    cardBg: 'bg-[#1a1811] hover:bg-[#221f15] border-amber-500/20',
-    iconBg: 'bg-amber-400/15 text-amber-300',
-    arrowColor: 'text-amber-300/80',
-  },
-  {
-    key: 'maintenance' as const,
-    title: 'Maintenance',
-    subtitle: 'Service, repairs & insurance.',
-    icon: Wrench,
-    cardBg: 'bg-[#171324] hover:bg-[#1f1930] border-purple-500/20',
-    iconBg: 'bg-purple-500/15 text-purple-300',
-    arrowColor: 'text-purple-300/80',
-  },
-  {
-    key: 'invoices' as const,
-    title: 'Invoices',
-    subtitle: 'Create invoices, payments & P&L.',
-    icon: FileText,
-    cardBg: 'bg-[#0f1c19] hover:bg-[#132420] border-emerald-500/20',
-    iconBg: 'bg-emerald-500/15 text-emerald-400',
-    arrowColor: 'text-emerald-400/80',
-  },
-] as const;
+/* Glossy 3D-style SVG icons matching the reference UI */
+const MapsPin3DIcon = () => (
+  <svg viewBox="0 0 64 64" className="h-14 w-14 drop-shadow-[0_6px_12px_rgba(0,0,0,0.45)]" fill="none">
+    <defs>
+      <linearGradient id="mapLeft" x1="6" y1="30" x2="28" y2="54" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#85c8ff" />
+        <stop offset="1" stopColor="#2a79db" />
+      </linearGradient>
+      <linearGradient id="mapMid" x1="22" y1="32" x2="42" y2="54" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#5aa9f8" />
+        <stop offset="1" stopColor="#1e5eb8" />
+      </linearGradient>
+      <linearGradient id="pinBody" x1="22" y1="6" x2="44" y2="40" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#93d5ff" />
+        <stop offset="0.55" stopColor="#2b85f5" />
+        <stop offset="1" stopColor="#144eb0" />
+      </linearGradient>
+    </defs>
+    <path d="M8 50L16 33L26 37L22 54L8 50Z" fill="url(#mapLeft)" />
+    <path d="M26 37L39 33L41 50L22 54L26 37Z" fill="url(#mapMid)" />
+    <path d="M39 33L52 36L56 52L41 50L39 33Z" fill="url(#mapLeft)" />
+    <path
+      d="M32 6C23.7 6 17 12.6 17 20.8C17 31.3 32 45 32 45C32 45 47 31.3 47 20.8C47 12.6 40.3 6 32 6Z"
+      fill="url(#pinBody)"
+    />
+    <circle cx="32" cy="20.5" r="6" fill="#0d254d" />
+  </svg>
+);
+
+const DieselNozzle3DIcon = () => (
+  <svg viewBox="0 0 64 64" className="h-14 w-14 drop-shadow-[0_6px_12px_rgba(0,0,0,0.45)]" fill="none">
+    <defs>
+      <linearGradient id="nozzleGold" x1="20" y1="12" x2="58" y2="54" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#ffe15c" />
+        <stop offset="0.5" stopColor="#f5b31a" />
+        <stop offset="1" stopColor="#b57106" />
+      </linearGradient>
+      <linearGradient id="dropGold" x1="12" y1="26" x2="22" y2="46" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#fff099" />
+        <stop offset="0.6" stopColor="#f7ba1e" />
+        <stop offset="1" stopColor="#c47f08" />
+      </linearGradient>
+    </defs>
+    {/* Fuel Drop */}
+    <path
+      d="M17 26C17 26 10 35.5 10 40.2C10 44.1 13.1 47 17 47C20.9 47 24 44.1 24 40.2C24 35.5 17 26 17 26Z"
+      fill="url(#dropGold)"
+    />
+    <ellipse cx="14.5" cy="39" rx="1.6" ry="3.2" fill="#fff7cc" opacity="0.7" />
+    {/* Spout */}
+    <path d="M18 22L31 15L34 20L21 26L18 22Z" fill="#cbd5e1" />
+    {/* Nozzle Body */}
+    <path
+      d="M30 14L44 12C47.5 11.6 50.8 14 51.4 17.5L55 38L44 41L41 28L34 29L30 14Z"
+      fill="url(#nozzleGold)"
+    />
+    {/* Handle Guard */}
+    <path
+      d="M36 28L40 43L52 40"
+      stroke="#d9930e"
+      strokeWidth="3.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    {/* Trigger */}
+    <path d="M40 31L45 36" stroke="#1e1b16" strokeWidth="3" strokeLinecap="round" />
+  </svg>
+);
+
+const MaintenanceTools3DIcon = () => (
+  <svg viewBox="0 0 64 64" className="h-14 w-14 drop-shadow-[0_6px_12px_rgba(0,0,0,0.45)]" fill="none">
+    <defs>
+      <linearGradient id="metalSilver" x1="10" y1="10" x2="54" y2="54" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#ffffff" />
+        <stop offset="0.55" stopColor="#cbd5e1" />
+        <stop offset="1" stopColor="#64748b" />
+      </linearGradient>
+    </defs>
+    {/* Wrench */}
+    <path
+      d="M17.5 12C14.5 12.8 12.2 15.2 11.6 18.3C10.9 21.8 12.2 25.3 14.8 27.3L43.5 53.5C45.3 55.2 48.1 55.1 49.8 53.4L52.2 51C53.9 49.3 54 46.5 52.3 44.7L26.1 16C24.2 13.7 21.2 12.5 18.2 13.1L22.5 17.4L19.5 22.5L14.4 20.5L17.5 12Z"
+      fill="url(#metalSilver)"
+    />
+    {/* Screwdriver */}
+    <path
+      d="M47 11L53 17L45 25L39 19L47 11Z"
+      fill="#94a3b8"
+    />
+    <path
+      d="M41 21L16 46L13 51L18 48L43 23L41 21Z"
+      fill="#e2e8f0"
+    />
+    <path
+      d="M46 12L52 18"
+      stroke="#ffffff"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const InvoicePaper3DIcon = () => (
+  <svg viewBox="0 0 64 64" className="h-14 w-14 drop-shadow-[0_6px_12px_rgba(0,0,0,0.45)]" fill="none">
+    <defs>
+      <linearGradient id="invPaper" x1="12" y1="8" x2="52" y2="56" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#e6fff3" />
+        <stop offset="0.55" stopColor="#9ce8c4" />
+        <stop offset="1" stopColor="#5ec497" />
+      </linearGradient>
+    </defs>
+    <g transform="rotate(-11 32 32)">
+      <rect x="13" y="8" width="38" height="48" rx="5" fill="url(#invPaper)" />
+      <text
+        x="32"
+        y="22"
+        textAnchor="middle"
+        fill="#0b3d28"
+        fontSize="7.2"
+        fontWeight="800"
+        fontFamily="system-ui, sans-serif"
+      >
+        INVOICE
+      </text>
+      <rect x="19" y="28" width="26" height="3" rx="1.5" fill="#176e49" opacity="0.6" />
+      <rect x="19" y="34" width="20" height="3" rx="1.5" fill="#176e49" opacity="0.45" />
+      <rect x="19" y="40" width="24" height="3" rx="1.5" fill="#176e49" opacity="0.45" />
+      <rect x="19" y="46" width="14" height="3" rx="1.5" fill="#176e49" opacity="0.35" />
+    </g>
+  </svg>
+);
 
 export const LorryServicesScreen: React.FC<LorryServicesScreenProps> = ({
   lorry,
@@ -128,7 +222,7 @@ export const LorryServicesScreen: React.FC<LorryServicesScreenProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Strictly lorry-scoped existing data (never inventing or hardcoding trip data)
+  // Strictly lorry-scoped existing data
   const activeTrip = useMemo(
     () => TripService.getByLorryId(lorry.id).find((t) => t.status === 'In Transit') ?? null,
     [lorry.id]
@@ -155,49 +249,55 @@ export const LorryServicesScreen: React.FC<LorryServicesScreenProps> = ({
   );
 
   const statusStyle = STATUS_PILL[lorry.status];
+  const truckImgSrc = `${import.meta.env.BASE_URL}images/fleetos-truck-hero.jpg`;
 
-  const validDistanceKm = savedRoute?.distanceKm ?? latestEstimate?.totalDistanceKm ?? null;
-  const validEtaText = savedRoute
-    ? `Est. ${formatDuration(savedRoute.durationSeconds)}`
-    : activeTrip && locationReport?.route?.eta
-      ? formatDate(locationReport.route.eta)
-      : null;
+  const routeLabel = activeTrip
+    ? `${activeTrip.startLocation} → ${activeTrip.destination}`
+    : locationReport?.route
+      ? `${locationReport.route.from} → ${locationReport.route.to}`
+      : 'No active trip';
+
+  const distanceText = savedRoute
+    ? `${savedRoute.distanceKm.toLocaleString('en-IN')} km`
+    : latestEstimate
+      ? `${latestEstimate.totalDistanceKm.toLocaleString('en-IN')} km`
+      : '—';
+
+  const etaText = savedRoute
+    ? formatDuration(savedRoute.durationSeconds)
+    : '—';
+
+  const dieselText = latestEstimate ? `≈ ${latestEstimate.totalDieselLitres} L` : '—';
 
   return (
-    <div className="min-h-screen w-full bg-[#060911] text-white font-sans">
-      <div className="mx-auto flex min-h-screen w-full max-w-[430px] md:max-w-[560px] flex-col px-4 pb-10">
-        {/* Top Mobile Header */}
+    <div className="min-h-screen w-full bg-[#05070b] text-white font-sans selection:bg-blue-600/40">
+      <div className="mx-auto flex min-h-screen w-full max-w-[430px] flex-col px-4 pb-28">
+        {/* ==================== TOP HEADER ==================== */}
         <header
           ref={menuRef}
-          className="sticky top-0 z-30 flex items-center justify-between gap-2 bg-[#060911]/95 py-4 backdrop-blur-sm"
+          className="sticky top-0 z-30 flex items-center justify-between bg-[#05070b]/95 pt-4 pb-3.5 backdrop-blur-sm"
         >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <button
-              type="button"
-              onClick={onBack}
-              aria-label="Back to My Lorries"
-              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-white/10 bg-[#111827] text-slate-200 transition-colors hover:bg-[#1a2438]"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white">
-                <Truck className="h-4 w-4" />
-              </div>
-              <div className="min-w-0">
-                <p className="truncate font-mono text-sm font-bold leading-tight text-white">
-                  FleetOS
-                </p>
-                <p className="truncate text-[11px] font-medium text-slate-400">
-                  Lorry Services
-                </p>
-              </div>
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex items-center gap-2.5 text-left focus:outline-none"
+            title="Back to My Lorries"
+          >
+            {/* Blue Stylized Truck Logo */}
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl text-[#2b85f5]">
+              <Truck className="h-8 w-8 stroke-[2.2]" />
             </div>
-          </div>
+            <div>
+              <p className="text-[22px] font-extrabold leading-none tracking-tight">
+                <span className="text-white">Fleet</span>
+                <span className="text-[#f5c431]">OS</span>
+              </p>
+              <p className="mt-0.5 text-[11px] font-medium text-slate-400">Lorry Services</p>
+            </div>
+          </button>
 
-          {/* Right: Notification Icon & More Options Menu */}
-          <div className="relative flex items-center gap-1.5 flex-shrink-0">
+          {/* Right: Bell with red dot + Horizontal 3 dots */}
+          <div className="relative flex items-center gap-2">
             <button
               type="button"
               onClick={() => {
@@ -205,12 +305,10 @@ export const LorryServicesScreen: React.FC<LorryServicesScreenProps> = ({
                 setMenuOpen(false);
               }}
               aria-label="Notifications"
-              className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-[#111827] text-slate-300 transition-colors hover:bg-[#1a2438] hover:text-white"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full text-slate-200 hover:bg-white/10"
             >
-              <Bell className="h-4 w-4" />
-              {openProblems.length > 0 && (
-                <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-amber-400" />
-              )}
+              <Bell className="h-5 w-5" />
+              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-[#05070b]" />
             </button>
 
             <button
@@ -220,14 +318,14 @@ export const LorryServicesScreen: React.FC<LorryServicesScreenProps> = ({
                 setNotifOpen(false);
               }}
               aria-label="More options"
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-[#111827] text-slate-300 transition-colors hover:bg-[#1a2438] hover:text-white"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-slate-200 hover:bg-white/10"
             >
-              <MoreVertical className="h-4 w-4" />
+              <MoreHorizontal className="h-5 w-5" />
             </button>
 
             {/* Notifications Popover */}
             {notifOpen && (
-              <div className="absolute right-0 top-12 z-40 w-64 rounded-2xl border border-white/10 bg-[#111827] p-3.5 shadow-xl">
+              <div className="absolute right-0 top-12 z-40 w-64 rounded-2xl border border-white/10 bg-[#12161f] p-3.5 shadow-2xl">
                 <p className="text-xs font-bold text-white">
                   Alerts · {lorry.registrationNumber}
                 </p>
@@ -247,7 +345,7 @@ export const LorryServicesScreen: React.FC<LorryServicesScreenProps> = ({
                         }}
                         className="w-full rounded-xl bg-white/5 p-2.5 text-left text-xs hover:bg-white/10"
                       >
-                        <p className="font-semibold text-amber-300">{p.problemType}</p>
+                        <p className="font-semibold text-[#f5c431]">{p.problemType}</p>
                         <p className="mt-0.5 line-clamp-1 text-[11px] text-slate-400">
                           {p.location} · {p.status}
                         </p>
@@ -260,7 +358,7 @@ export const LorryServicesScreen: React.FC<LorryServicesScreenProps> = ({
 
             {/* More Options Dropdown */}
             {menuOpen && (
-              <div className="absolute right-0 top-12 z-40 w-52 overflow-hidden rounded-2xl border border-white/10 bg-[#111827] py-1.5 shadow-xl">
+              <div className="absolute right-0 top-12 z-40 w-52 overflow-hidden rounded-2xl border border-white/10 bg-[#12161f] py-1.5 shadow-2xl">
                 <button
                   type="button"
                   onClick={() => {
@@ -300,147 +398,271 @@ export const LorryServicesScreen: React.FC<LorryServicesScreenProps> = ({
           </div>
         </header>
 
-        {/* Main Content */}
-        <main className="flex-1 space-y-5 pt-1">
-          {/* Selected Lorry Information Card */}
-          <section className="rounded-2xl border border-white/10 bg-[#0f172a] p-4 shadow-sm">
-            <div className="flex items-start gap-3.5">
-              {/* Crisp Lorry Illustration */}
-              <div className="flex h-16 w-20 flex-shrink-0 items-center justify-center rounded-xl border border-white/10 bg-[#172138] p-2">
-                <svg
-                  viewBox="0 0 80 48"
-                  className="h-full w-full"
-                  fill="none"
-                  aria-label={`${lorry.manufacturer} ${lorry.model}`}
-                >
-                  <rect x="4" y="10" width="44" height="24" rx="3" fill="#1e3a5f" stroke="#60a5fa" strokeWidth="1.5" />
-                  <path d="M48 16H62L70 24V34H48V16Z" fill="#2563eb" stroke="#93c5fd" strokeWidth="1.5" strokeLinejoin="round" />
-                  <path d="M52 19H60.5L65.5 24H52V19Z" fill="#0f172a" />
-                  <rect x="2" y="34" width="72" height="3" rx="1.5" fill="#475569" />
-                  <circle cx="18" cy="39" r="5.5" fill="#0f172a" stroke="#94a3b8" strokeWidth="2" />
-                  <circle cx="34" cy="39" r="5.5" fill="#0f172a" stroke="#94a3b8" strokeWidth="2" />
-                  <circle cx="60" cy="39" r="5.5" fill="#0f172a" stroke="#94a3b8" strokeWidth="2" />
-                </svg>
-              </div>
+        {/* ==================== MAIN CONTENT ==================== */}
+        <main className="flex-1 space-y-5">
+          {/* 1. SELECTED LORRY HERO CARD (Warm Gold Arc Glow + Realistic White Truck + 4-Col Metrics) */}
+          <section className="relative overflow-hidden rounded-[22px] border border-white/10 bg-gradient-to-br from-[#171c26] via-[#121620] to-[#0e1118] shadow-xl">
+            {/* Warm Golden Curve Glow behind Truck */}
+            <div
+              className="pointer-events-none absolute -right-6 -top-10 h-44 w-64 rounded-full opacity-45 blur-2xl"
+              style={{
+                background:
+                  'radial-gradient(circle at 60% 45%, #d49b24 0%, #6b4b0e 45%, transparent 75%)',
+              }}
+            />
 
-              <div className="min-w-0 flex-1 space-y-1">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h1 className="truncate font-mono text-base font-bold tracking-wide text-white">
-                    {lorry.registrationNumber}
-                  </h1>
+            {/* Top Hero Row */}
+            <div className="relative flex items-center justify-between gap-2 px-4 pt-4 pb-3">
+              <div className="min-w-0 z-10 space-y-2">
+                <h1 className="font-mono text-[20px] font-extrabold tracking-tight text-white">
+                  {lorry.registrationNumber}
+                </h1>
+                <div>
                   <span
                     className={clsx(
-                      'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold',
+                      'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold',
                       statusStyle.bg,
                       statusStyle.text
                     )}
                   >
-                    <span className={clsx('h-1.5 w-1.5 rounded-full', statusStyle.dot)} />
+                    <span className={clsx('h-2 w-2 rounded-full', statusStyle.dot)} />
                     {lorry.status}
                   </span>
                 </div>
-
                 <p className="truncate text-xs font-medium text-slate-300">
-                  {lorry.manufacturer} {lorry.model}
+                  {lorry.manufacturer} {lorry.model.split('(')[0].trim()} &bull;{' '}
+                  {lorry.loadCapacityTonnes} Ton
                 </p>
-                <p className="text-[11px] text-slate-400">
-                  {lorry.vehicleType} · {lorry.loadCapacityTonnes} Tonnes · {lorry.numberOfTyres} Tyres
-                </p>
+              </div>
+
+              {/* Realistic Truck Image + Right Chevron */}
+              <div className="relative flex items-center justify-end flex-shrink-0">
+                <img
+                  src={truckImgSrc}
+                  alt={`${lorry.manufacturer} ${lorry.model}`}
+                  className="h-24 w-40 object-contain mix-blend-lighten select-none pointer-events-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => onNavigateSection('maps')}
+                  aria-label="Open Maps & GPS"
+                  className="ml-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/10 text-slate-200 backdrop-blur-sm hover:bg-white/20"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
               </div>
             </div>
 
-            {/* Conditional Active Trip & Genuine Estimate Details (Only shown when real/linked records exist) */}
-            {(activeTrip || validDistanceKm !== null || latestEstimate !== null) && (
-              <div className="mt-4 space-y-2.5 border-t border-white/10 pt-3.5">
-                {activeTrip && (
-                  <div className="flex items-center justify-between gap-2 text-xs">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Navigation className="h-3.5 w-3.5 flex-shrink-0 text-blue-400" />
-                      <span className="truncate font-semibold text-white">
-                        {activeTrip.startLocation} → {activeTrip.destination}
-                      </span>
-                    </div>
-                    <span className="flex-shrink-0 rounded bg-white/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-slate-300">
-                      {activeTrip.id} · DEMO
-                    </span>
-                  </div>
-                )}
-
-                {(validDistanceKm !== null || validEtaText || latestEstimate) && (
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {validDistanceKm !== null && (
-                      <div className="rounded-xl bg-white/5 px-3 py-2">
-                        <p className="text-[10px] font-medium uppercase text-slate-400">Distance</p>
-                        <p className="mt-0.5 font-mono text-xs font-bold text-white">
-                          {validDistanceKm.toLocaleString('en-IN')} km
-                        </p>
-                      </div>
-                    )}
-                    {validEtaText && (
-                      <div className="rounded-xl bg-white/5 px-3 py-2">
-                        <p className="text-[10px] font-medium uppercase text-slate-400">ETA</p>
-                        <p className="mt-0.5 truncate font-mono text-xs font-bold text-white">
-                          {validEtaText}
-                        </p>
-                      </div>
-                    )}
-                    {latestEstimate && (
-                      <div className="rounded-xl bg-white/5 px-3 py-2">
-                        <p className="text-[10px] font-medium uppercase text-slate-400">Est. Diesel</p>
-                        <p className="mt-0.5 font-mono text-xs font-bold text-amber-300">
-                          {latestEstimate.totalDieselLitres} L
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
+            {/* Bottom 4-Column Divided Stats Strip */}
+            <div className="relative grid grid-cols-4 divide-x divide-white/10 border-t border-white/10 bg-black/25 px-1 py-3 text-center">
+              <div className="flex flex-col items-center justify-center gap-1 px-1">
+                <Route className="h-4 w-4 text-sky-300" />
+                <p className="line-clamp-2 text-[10px] font-semibold leading-tight text-slate-100">
+                  {routeLabel}
+                </p>
               </div>
-            )}
+              <div className="flex flex-col items-center justify-center gap-1 px-1">
+                <Truck className="h-4 w-4 text-sky-300" />
+                <p className="font-mono text-[11px] font-bold text-white">{distanceText}</p>
+              </div>
+              <div className="flex flex-col items-center justify-center gap-1 px-1">
+                <Clock className="h-4 w-4 text-sky-300" />
+                <p className="font-mono text-[11px] font-bold text-white">{etaText}</p>
+              </div>
+              <div className="flex flex-col items-center justify-center gap-1 px-1">
+                <Fuel className="h-4 w-4 text-sky-300" />
+                <p className="font-mono text-[11px] font-bold text-white">{dieselText}</p>
+              </div>
+            </div>
           </section>
 
-          {/* Four Main Service Cards — Strictly 2x2 Grid */}
-          <section className="space-y-3">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Services
-            </h2>
+          {/* 2. LORRY SERVICES 2x2 RICH GRADIENT CARDS */}
+          <section className="space-y-3.5">
+            <h2 className="text-[20px] font-bold tracking-tight text-white">Lorry Services</h2>
 
-            <div className="grid grid-cols-2 gap-3">
-              {SERVICE_CARDS.map(({ key, title, subtitle, icon: Icon, cardBg, iconBg, arrowColor }) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => onNavigateSection(key)}
-                  className={clsx(
-                    'group flex min-h-[148px] w-full flex-col justify-between rounded-2xl border p-4 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/50',
-                    cardBg
-                  )}
-                >
-                  <div className="flex w-full items-start justify-between gap-2">
-                    <div
-                      className={clsx(
-                        'flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl',
-                        iconBg
-                      )}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <ChevronRight
-                      className={clsx(
-                        'mt-1 h-4 w-4 flex-shrink-0 transition-transform group-hover:translate-x-0.5',
-                        arrowColor
-                      )}
-                    />
+            <div className="grid grid-cols-2 gap-3.5">
+              {/* Card 1: Maps & GPS (Royal Blue) */}
+              <button
+                type="button"
+                onClick={() => onNavigateSection('maps')}
+                className="group relative flex min-h-[156px] flex-col justify-between overflow-hidden rounded-[22px] border border-blue-400/25 p-4 text-left shadow-lg transition-transform active:scale-[0.98]"
+                style={{
+                  background:
+                    'linear-gradient(150deg, #1b65cc 0%, #103268 48%, #0b1629 100%)',
+                }}
+              >
+                <div className="flex w-full justify-end">
+                  <MapsPin3DIcon />
+                </div>
+                <div className="mt-1 flex items-end justify-between gap-1.5">
+                  <div className="min-w-0">
+                    <h3 className="text-[15px] font-bold leading-tight text-white">Maps &amp; GPS</h3>
+                    <p className="mt-1 text-[11px] leading-snug text-blue-100/75">
+                      Route, live tracking &amp; trip history
+                    </p>
                   </div>
+                  <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/15 text-white group-hover:bg-white/25">
+                    <ChevronRight className="h-4 w-4" />
+                  </span>
+                </div>
+              </button>
 
-                  <div className="mt-4 space-y-1">
-                    <h3 className="text-sm font-bold leading-snug text-white">{title}</h3>
-                    <p className="text-[11px] leading-relaxed text-slate-400">{subtitle}</p>
+              {/* Card 2: Diesel Management (Warm Gold / Amber) */}
+              <button
+                type="button"
+                onClick={() => onNavigateSection('diesel')}
+                className="group relative flex min-h-[156px] flex-col justify-between overflow-hidden rounded-[22px] border border-amber-400/25 p-4 text-left shadow-lg transition-transform active:scale-[0.98]"
+                style={{
+                  background:
+                    'linear-gradient(150deg, #a67a16 0%, #4d370c 48%, #1d1508 100%)',
+                }}
+              >
+                <div className="flex w-full justify-end">
+                  <DieselNozzle3DIcon />
+                </div>
+                <div className="mt-1 flex items-end justify-between gap-1.5">
+                  <div className="min-w-0">
+                    <h3 className="text-[15px] font-bold leading-tight text-white">
+                      Diesel Management
+                    </h3>
+                    <p className="mt-1 text-[11px] leading-snug text-amber-100/75">
+                      Fuel, receipts &amp; reports
+                    </p>
                   </div>
-                </button>
-              ))}
+                  <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/15 text-white group-hover:bg-white/25">
+                    <ChevronRight className="h-4 w-4" />
+                  </span>
+                </div>
+              </button>
+
+              {/* Card 3: Maintenance (Rich Violet / Purple) */}
+              <button
+                type="button"
+                onClick={() => onNavigateSection('maintenance')}
+                className="group relative flex min-h-[156px] flex-col justify-between overflow-hidden rounded-[22px] border border-purple-400/25 p-4 text-left shadow-lg transition-transform active:scale-[0.98]"
+                style={{
+                  background:
+                    'linear-gradient(150deg, #6d3ec4 0%, #331e5e 48%, #160f26 100%)',
+                }}
+              >
+                <div className="flex w-full justify-end">
+                  <MaintenanceTools3DIcon />
+                </div>
+                <div className="mt-1 flex items-end justify-between gap-1.5">
+                  <div className="min-w-0">
+                    <h3 className="text-[15px] font-bold leading-tight text-white">Maintenance</h3>
+                    <p className="mt-1 text-[11px] leading-snug text-purple-100/75">
+                      Service, repairs &amp; insurance
+                    </p>
+                  </div>
+                  <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/15 text-white group-hover:bg-white/25">
+                    <ChevronRight className="h-4 w-4" />
+                  </span>
+                </div>
+              </button>
+
+              {/* Card 4: Invoices (Rich Emerald Green) */}
+              <button
+                type="button"
+                onClick={() => onNavigateSection('invoices')}
+                className="group relative flex min-h-[156px] flex-col justify-between overflow-hidden rounded-[22px] border border-emerald-400/25 p-4 text-left shadow-lg transition-transform active:scale-[0.98]"
+                style={{
+                  background:
+                    'linear-gradient(150deg, #168c59 0%, #0e4630 48%, #091d16 100%)',
+                }}
+              >
+                <div className="flex w-full justify-end">
+                  <InvoicePaper3DIcon />
+                </div>
+                <div className="mt-1 flex items-end justify-between gap-1.5">
+                  <div className="min-w-0">
+                    <h3 className="text-[15px] font-bold leading-tight text-white">Invoices</h3>
+                    <p className="mt-1 text-[11px] leading-snug text-emerald-100/75">
+                      Create invoices, payments &amp; P&amp;L
+                    </p>
+                  </div>
+                  <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/15 text-white group-hover:bg-white/25">
+                    <ChevronRight className="h-4 w-4" />
+                  </span>
+                </div>
+              </button>
             </div>
+          </section>
+
+          {/* 3. BOTTOM PROMO / EXPLORE BANNER CARD */}
+          <section
+            className="relative overflow-hidden rounded-[22px] border border-white/10 p-4 shadow-xl"
+            style={{
+              background:
+                'linear-gradient(110deg, #272017 0%, #1c1813 45%, #3d2c12 100%)',
+            }}
+          >
+            <div className="relative z-10 max-w-[64%] space-y-3">
+              <p className="text-[17px] font-bold italic leading-snug text-white">
+                Manage Your Lorry Smarter with{' '}
+                <span className="text-[#f5c431]">FleetOS</span>
+              </p>
+              <button
+                type="button"
+                onClick={() => onNavigateSection('expenses')}
+                className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full bg-[#f5c431] px-4 py-1.5 text-xs font-extrabold text-[#111318] shadow-sm transition-colors hover:bg-[#ffd24d]"
+              >
+                Explore All Features
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            <img
+              src={truckImgSrc}
+              alt="FleetOS Truck"
+              className="pointer-events-none absolute -right-3 bottom-1 h-28 w-44 object-contain mix-blend-lighten opacity-95 select-none"
+            />
           </section>
         </main>
+      </div>
+
+      {/* ==================== FLOATING PILL BOTTOM NAVIGATION ==================== */}
+      <div className="fixed bottom-3 left-0 right-0 z-40 flex justify-center px-4 pointer-events-none">
+        <nav
+          aria-label="FleetOS Navigation"
+          className="pointer-events-auto grid w-full max-w-[398px] grid-cols-4 items-center rounded-full border border-white/10 bg-[#14171f]/95 p-1.5 shadow-2xl backdrop-blur-md"
+        >
+          <button
+            type="button"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="flex flex-col items-center justify-center gap-0.5 rounded-full bg-[#3f3218]/90 py-2 text-[#f5c431]"
+          >
+            <Home className="h-4 w-4 fill-current" />
+            <span className="text-[10px] font-bold">Home</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex flex-col items-center justify-center gap-0.5 rounded-full py-2 text-slate-400 hover:text-white"
+          >
+            <Truck className="h-4 w-4" />
+            <span className="text-[10px] font-medium">Lorries</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onNavigateSection('expenses')}
+            className="flex flex-col items-center justify-center gap-0.5 rounded-full py-2 text-slate-400 hover:text-white"
+          >
+            <BarChart3 className="h-4 w-4" />
+            <span className="text-[10px] font-medium">Reports</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onNavigateSection('driver')}
+            className="flex flex-col items-center justify-center gap-0.5 rounded-full py-2 text-slate-400 hover:text-white"
+          >
+            <UserRound className="h-4 w-4" />
+            <span className="text-[10px] font-medium">Profile</span>
+          </button>
+        </nav>
       </div>
     </div>
   );
